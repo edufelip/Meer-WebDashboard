@@ -24,7 +24,8 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-explicit-any": "off",
-      "no-undef": "off"
+      "no-undef": "off",
+      "@typescript-eslint/no-unused-expressions": ["warn", { allowShortCircuit: true, allowTernary: true }]
     }
   }
 ];

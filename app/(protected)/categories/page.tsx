@@ -17,7 +17,7 @@ export default function CategoriesPage() {
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["categories", page],
     queryFn: () => api.get<PageResponse<Category>>(`/dashboard/categories?page=${page}&pageSize=50`),
-    keepPreviousData: true
+    placeholderData: (prev) => prev
   });
 
   const upsertMutation = useMutation({
