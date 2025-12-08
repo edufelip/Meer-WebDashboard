@@ -20,7 +20,7 @@ export default function DashboardPage() {
   );
 }
 
-function Card({ title, description, href }: { title: string; description: string; href: string }) {
+function Card({ title, description, href }: { title: string; description: string; href: `/${string}` }) {
   return (
     <Link
       href={href}
