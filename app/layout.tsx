@@ -1,0 +1,15 @@
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Meer Admin",
+  description: "Administração do Guia Brechó"
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="pt-BR">
+      <body className="bg-[#F3F4F6]">{children}</body>
+    </html>
+  );
+}
