@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 
 export default function DashboardPage() {
   return (
@@ -20,7 +21,7 @@ export default function DashboardPage() {
   );
 }
 
-function Card({ title, description, href }: { title: string; description: string; href: `/${string}` }) {
+function Card({ title, description, href }: { title: string; description: string; href: Route }) {
   return (
     <Link
       href={href}
