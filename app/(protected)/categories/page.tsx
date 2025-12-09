@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
@@ -14,7 +14,7 @@ export default function CategoriesPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, error, refetch, isFetching } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["categories", page],
     queryFn: () => api.get<PageResponse<Category>>(`/dashboard/categories?page=${page}&pageSize=50`),
     placeholderData: (prev) => prev
@@ -46,12 +46,6 @@ export default function CategoriesPage() {
     mutationFn: (id: string) => api.del(`/dashboard/categories/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] })
   });
-
-  useEffect(() => {
-    if (!isFetching) {
-      refetch();
-    }
-  }, [page, refetch, isFetching]);
 
   const items = data?.items ?? [];
 
