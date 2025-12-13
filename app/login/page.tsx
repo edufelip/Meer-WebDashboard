@@ -3,6 +3,7 @@ import { getToken, setRefreshToken, setToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { selectApiBase } from "@/lib/apiBase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,11 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [, setCheckingSession] = useState(true);
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_PROXY ||
-    process.env.EXPO_PUBLIC_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "/api";
+  const baseUrl = selectApiBase();
   const appPackage = process.env.NEXT_PUBLIC_APP_PACKAGE || process.env.EXPO_PUBLIC_APP_PACKAGE || "com.edufelip.meer";
 
   // If already logged, redirect to dashboard
