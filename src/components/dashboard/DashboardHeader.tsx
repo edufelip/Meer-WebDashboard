@@ -23,7 +23,7 @@ export function DashboardHeader({ avatarUrl, notifications = 0 }: DashboardHeade
         style={{
           backgroundImage: avatarUrl
             ? `url(${avatarUrl})`
-            : "radial-gradient(circle at 30% 30%, #2bee79 0, #234832 60%)"
+            : "radial-gradient(circle at 30% 30%, #e5aa00 0, #b14300 60%)"
         }}
         aria-label="Usuário logado"
       />

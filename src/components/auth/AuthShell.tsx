@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-brand-forest via-brand-surface to-[#0f1a13] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-brand-forest via-brand-surface to-brand-card text-white">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-20 top-10 h-64 w-64 rounded-full bg-brand-primary/15 blur-3xl" />
         <div className="absolute right-10 top-32 h-72 w-72 rounded-full bg-brand-card/50 blur-3xl" />

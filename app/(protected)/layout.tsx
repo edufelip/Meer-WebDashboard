@@ -28,12 +28,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }, [router]);
 
   if (!ready) {
-    return <div className="min-h-screen bg-[#F3F4F6]" />;
+    return <div className="min-h-screen bg-background" />;
   }
 
   return (
     <ReactQueryProvider>
-      <main className="min-h-screen w-full bg-[#0f1a13] text-white">{children}</main>
+      <main className="min-h-screen w-full bg-brand-forest text-white">{children}</main>
     </ReactQueryProvider>
   );
 }

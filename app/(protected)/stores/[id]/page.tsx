@@ -1,19 +1,79 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
+import clsx from "classnames";
 import { api } from "@/lib/api";
 import type { ThriftStore } from "@/types/index";
-import Image from "next/image";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Pill } from "@/components/dashboard/Pill";
+
+type StoreFormState = {
+  name: string;
+  tagline: string;
+  description: string;
+  openingHours: string;
+  addressLine: string;
+  neighborhood: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  instagram: string;
+  facebook: string;
+  website: string;
+  categories: string;
+  latitude: string;
+  longitude: string;
+};
+
+type PhotoDraft = {
+  localId: string;
+  id?: string | number;
+  url?: string;
+  previewUrl?: string;
+  file?: File;
+  fileKey?: string;
+};
+
+type PhotoUploadSlot = { uploadUrl: string; fileKey: string; contentType: string };
+
+const MAX_PHOTOS = 10;
+const ALLOWED_TYPES = ["image/jpeg", "image/webp", "image/jpg", "image/pjpeg", "image/x-webp"];
+const MAX_SIZE = 2 * 1024 * 1024;
+const ADDRESS_DEBOUNCE_MS = 500;
+
+type AddressSuggestion = {
+  id: string;
+  label: string;
+  placeName: string;
+  lat: number;
+  lng: number;
+  neighborhood?: string;
+};
 
 export default function StoreDetailPage() {
   const params = useParams<{ id: string }>();
+  const storeId = params?.id as string;
   const router = useRouter();
   const qc = useQueryClient();
-  const storeId = params?.id as string;
+
+  const [form, setForm] = useState<StoreFormState | null>(null);
+  const [showEdit, setShowEdit] = useState(true);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const [addressShouldFetch, setAddressShouldFetch] = useState(false);
+
+  const [photoDrafts, setPhotoDrafts] = useState<PhotoDraft[]>([]);
+  const [deletedPhotoIds, setDeletedPhotoIds] = useState<(string | number)[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoStatus, setPhotoStatus] = useState<string | null>(null);
+  const [savingAll, setSavingAll] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["store", storeId],
@@ -27,6 +87,90 @@ export default function StoreDetailPage() {
       qc.invalidateQueries({ queryKey: ["stores"] });
     }
   });
+
+  const {
+    mutateAsync: updateStore,
+    isPending: isSavingStore
+  } = useMutation({
+    mutationFn: (payload: any) => api.put<ThriftStore>(`/stores/${storeId}`, payload),
+    onSuccess: async () => {
+      setFormError(null);
+      await qc.invalidateQueries({ queryKey: ["store", storeId] });
+    },
+    onError: () => setFormError("Não foi possível salvar. Verifique os campos e tente novamente.")
+  });
+
+  useEffect(() => {
+    if (!data) return;
+    setForm({
+      name: data.name ?? "",
+      tagline: data.tagline ?? "",
+      description: data.description ?? "",
+      openingHours: data.openingHours ?? "",
+      addressLine: data.addressLine ?? "",
+      neighborhood: data.neighborhood ?? "",
+      phone: data.phone ?? "",
+      whatsapp: data.whatsapp ?? "",
+      email: data.email ?? "",
+      instagram: data.instagram ?? "",
+      facebook: data.facebook ?? "",
+      website: data.website ?? "",
+      categories: (data.categories ?? []).join(", "),
+      latitude: data.latitude != null ? String(data.latitude) : "",
+      longitude: data.longitude != null ? String(data.longitude) : ""
+    });
+    setAddressQuery(data.addressLine ?? "");
+    setPhotoDrafts(buildPhotoDrafts(data));
+    setDeletedPhotoIds([]);
+    setPhotoError(null);
+    setPhotoStatus(null);
+    setAddressError(null);
+    setAddressSuggestions([]);
+  }, [data]);
+
+  const mapboxToken =
+    process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.EXPO_PUBLIC_MAPBOX_TOKEN || process.env.MAPBOX_TOKEN;
+
+  useEffect(() => {
+    if (!addressShouldFetch) return;
+    if (!addressQuery || addressQuery.trim().length < 3) {
+      setAddressSuggestions([]);
+      setAddressError(null);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      if (!mapboxToken) {
+        setAddressError("Configure NEXT_PUBLIC_MAPBOX_TOKEN para sugestões de endereço.");
+        setAddressSuggestions([]);
+        return;
+      }
+      setAddressLoading(true);
+      setAddressError(null);
+      try {
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          addressQuery
+        )}.json?autocomplete=true&limit=5&language=pt&access_token=${mapboxToken}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Geocoding error");
+        const json = await res.json();
+        const suggestions: AddressSuggestion[] = (json.features ?? []).map((f: any) => ({
+          id: f.id,
+          label: f.text,
+          placeName: f.place_name,
+          lat: f.center?.[1],
+          lng: f.center?.[0],
+          neighborhood: extractNeighborhood(f)
+        }));
+        setAddressSuggestions(suggestions);
+      } catch (err) {
+        console.error(err);
+        setAddressError("Não foi possível buscar sugestões. Verifique sua conexão ou token do Mapbox.");
+      } finally {
+        setAddressLoading(false);
+      }
+    }, ADDRESS_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [addressQuery, addressShouldFetch, mapboxToken]);
 
   const onDelete = () => {
     if (!storeId) return;
@@ -46,12 +190,279 @@ export default function StoreDetailPage() {
 
   if (isLoading) return <div className="p-4">Carregando...</div>;
   if (error || !data) return <div className="p-4 text-red-600">Erro ao carregar brechó.</div>;
+  if (!form) return null;
 
-  const images = (data.images ?? []).slice().sort((a, b) => {
-    const ao = a.displayOrder ?? 0;
-    const bo = b.displayOrder ?? 0;
-    return ao - bo;
-  });
+  const handleSaveBasic = async () => {
+    if (!data || !form) return;
+    setFormError(null);
+    setFormMessage(null);
+    setPhotoError(null);
+    setPhotoStatus(null);
+    setSavingAll(true);
+
+    const payload: Record<string, any> = {};
+    let changes = 0;
+
+    const nullable = (value: string) => {
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    };
+
+    const safeCompare = (value: any) => (value === null || value === undefined ? null : value);
+
+    const name = form.name.trim();
+    if (name === "") {
+      setFormError("O nome não pode ficar em branco.");
+      return;
+    }
+    if (name !== data.name) {
+      payload.name = name;
+      changes++;
+    }
+
+    const addressLine = form.addressLine.trim();
+    if (addressLine === "" && data.addressLine) {
+      setFormError("O endereço não pode ser vazio. Use um valor ou remova manualmente no backend.");
+      return;
+    }
+    if (addressLine !== (data.addressLine ?? "")) {
+      payload.addressLine = addressLine === "" ? null : addressLine;
+      changes++;
+    }
+
+    const applyField = (key: keyof StoreFormState, current: any) => {
+      const next = nullable(form[key]);
+      if (safeCompare(next) !== safeCompare(current)) {
+        payload[key] = next;
+        changes++;
+      }
+    };
+
+    applyField("tagline", data.tagline);
+    applyField("description", data.description);
+    applyField("openingHours", data.openingHours);
+    applyField("neighborhood", data.neighborhood);
+    applyField("phone", data.phone);
+    applyField("whatsapp", data.whatsapp);
+    applyField("email", data.email);
+    applyField("instagram", data.instagram);
+    applyField("facebook", data.facebook);
+    applyField("website", data.website);
+
+    const newCategories = normalizeCategories(form.categories);
+    const currentCategories = normalizeCategories((data.categories ?? []).join(","));
+    if (newCategories.join(",") !== currentCategories.join(",")) {
+      payload.categories = newCategories;
+      changes++;
+    }
+
+    const latText = form.latitude.trim();
+    const lngText = form.longitude.trim();
+    const hasLat = latText !== "";
+    const hasLng = lngText !== "";
+
+    const addressChanged = addressLine !== (data.addressLine ?? "");
+    if (addressChanged && (!hasLat || !hasLng)) {
+      setFormError("Selecione uma sugestão para preencher latitude e longitude ao alterar o endereço.");
+      return;
+    }
+
+    if (hasLat !== hasLng) {
+      setFormError("Latitude e longitude devem ser enviadas juntas.");
+      return;
+    }
+
+    if (hasLat && hasLng) {
+      const latNum = Number(latText);
+      const lngNum = Number(lngText);
+      if (Number.isNaN(latNum) || Number.isNaN(lngNum)) {
+        setFormError("Latitude e longitude devem ser números.");
+        return;
+      }
+      if (latNum !== data.latitude || lngNum !== data.longitude) {
+        payload.latitude = latNum;
+        payload.longitude = lngNum;
+        changes++;
+      }
+    }
+
+    const photosDirty = arePhotosDirty(photoDrafts, deletedPhotoIds, data.images ?? []);
+
+    if (!photosDirty && changes === 0) {
+      setFormMessage("Nada para salvar — nenhuma alteração detectada.");
+      setSavingAll(false);
+      return;
+    }
+
+    try {
+      if (photosDirty) {
+        await processPhotosFlow({
+          storeId,
+          drafts: photoDrafts,
+          deletedPhotoIds,
+          setStatus: setPhotoStatus,
+          setError: setPhotoError,
+          setDrafts: setPhotoDrafts,
+          resetDeleted: () => setDeletedPhotoIds([])
+        });
+        await qc.invalidateQueries({ queryKey: ["store", storeId] });
+      }
+
+      if (changes > 0) {
+        await updateStore(payload);
+      }
+
+      setFormMessage("Alterações salvas.");
+    } catch (err) {
+      console.error(err);
+      setFormError("Não foi possível salvar. Verifique os campos e tente novamente.");
+    } finally {
+      setSavingAll(false);
+    }
+  };
+
+  const handleAddPhotos = (files: FileList | null) => {
+    if (!files) return;
+    setPhotoError(null);
+    const existingCount = photoDrafts.length;
+    const incoming = Array.from(files);
+
+    if (existingCount + incoming.length > MAX_PHOTOS) {
+      setPhotoError(`Máximo de ${MAX_PHOTOS} fotos. Remova alguma antes de adicionar.`);
+      return;
+    }
+
+    const nextDrafts: PhotoDraft[] = [];
+    for (const file of incoming) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setPhotoError("Formatos permitidos: JPEG ou WEBP.");
+        return;
+      }
+      if (file.size > MAX_SIZE) {
+        setPhotoError("Cada arquivo deve ter no máximo 2MB.");
+        return;
+      }
+      const localId = `new-${crypto.randomUUID?.() ?? Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      nextDrafts.push({
+        localId,
+        file,
+        previewUrl: URL.createObjectURL(file)
+      });
+    }
+
+    setPhotoDrafts((prev) => [...prev, ...nextDrafts].slice(0, MAX_PHOTOS));
+  };
+
+  const movePhoto = (localId: string, direction: -1 | 1) => {
+    setPhotoDrafts((prev) => {
+      const idx = prev.findIndex((p) => p.localId === localId);
+      if (idx < 0) return prev;
+      const swapWith = idx + direction;
+      if (swapWith < 0 || swapWith >= prev.length) return prev;
+      const copy = [...prev];
+      [copy[idx], copy[swapWith]] = [copy[swapWith], copy[idx]];
+      return copy;
+    });
+  };
+
+  const setAsCover = (localId: string) => {
+    setPhotoDrafts((prev) => {
+      const idx = prev.findIndex((p) => p.localId === localId);
+      if (idx <= 0) return prev;
+      const copy = [...prev];
+      const [item] = copy.splice(idx, 1);
+      copy.unshift(item);
+      return copy;
+    });
+  };
+
+  const removePhoto = (localId: string) => {
+    setPhotoDrafts((prev) => {
+      const target = prev.find((p) => p.localId === localId);
+      if (!target) return prev;
+      if (target.id) {
+        setDeletedPhotoIds((ids) => Array.from(new Set([...ids, target.id!])));
+      }
+      return prev.filter((p) => p.localId !== localId);
+    });
+  };
+
+  const savePhotos = async () => {
+    setPhotoError(null);
+    setPhotoStatus(null);
+    setSavingPhotos(true);
+
+    if (photoDrafts.length === 0) {
+      setPhotoError("Adicione ao menos uma foto para salvar.");
+      setSavingPhotos(false);
+      return;
+    }
+    if (photoDrafts.length > MAX_PHOTOS) {
+      setPhotoError(`Máximo de ${MAX_PHOTOS} fotos.`);
+      setSavingPhotos(false);
+      return;
+    }
+
+    const draftsCopy = photoDrafts.map((p) => ({ ...p }));
+    const pending = draftsCopy.filter((d) => d.file && !d.fileKey);
+
+    try {
+      if (pending.length > 0) {
+        setPhotoStatus("Solicitando URLs de upload...");
+        const uploadRes = await api.post<{ uploads: PhotoUploadSlot[] }>(`/stores/${storeId}/photos/uploads`, {
+          count: pending.length,
+          contentTypes: pending.map((p) => p.file?.type || "image/jpeg")
+        });
+
+        const slots = uploadRes.uploads ?? [];
+        if (slots.length !== pending.length) {
+          throw new Error("Resposta inesperada ao solicitar uploads.");
+        }
+
+        setPhotoStatus("Enviando arquivos...");
+        await Promise.all(
+          pending.map((draft, idx) => {
+            const slot = slots[idx];
+            draft.fileKey = slot.fileKey;
+            return fetch(slot.uploadUrl, {
+              method: "PUT",
+              headers: { "Content-Type": slot.contentType },
+              body: draft.file!
+            }).then((res) => {
+              if (!res.ok) throw new Error("Falha ao enviar arquivo de imagem.");
+            });
+          })
+        );
+      }
+
+      const photosPayload = draftsCopy.map((draft, index) => {
+        if (!draft.id && !draft.fileKey) {
+          throw new Error("Arquivo novo sem fileKey. Tente novamente.");
+        }
+        return {
+          position: index,
+          ...(draft.id ? { photoId: draft.id } : {}),
+          ...(draft.fileKey ? { fileKey: draft.fileKey } : {})
+        };
+      });
+
+      setPhotoStatus("Registrando ordem e capa...");
+      const updated = await api.put<ThriftStore>(`/stores/${storeId}/photos`, {
+        photos: photosPayload,
+        deletePhotoIds: deletedPhotoIds.length ? deletedPhotoIds : undefined
+      });
+
+      setPhotoDrafts(buildPhotoDrafts(updated));
+      setDeletedPhotoIds([]);
+      setPhotoStatus("Fotos atualizadas.");
+      await qc.invalidateQueries({ queryKey: ["store", storeId] });
+    } catch (err) {
+      console.error(err);
+      setPhotoError("Não foi possível salvar as fotos. Verifique os arquivos e tente novamente.");
+    } finally {
+      setSavingPhotos(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-white">
@@ -59,100 +470,456 @@ export default function StoreDetailPage() {
         title={data.name}
         subtitle={data.tagline || data.addressLine || "Detalhes do brechó"}
         actions={
-          <button
-            onClick={onDelete}
-            className="rounded-xl border border-red-400/50 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setShowEdit((v) => !v)}
+              className="rounded-xl border border-brand-card/40 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {showEdit ? "Fechar edição" : "Editar"}
+            </button>
+            <button
+              onClick={onDelete}
+              className="rounded-xl border border-red-400/50 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </button>
+          </div>
         }
       />
 
-      {data.coverImageUrl && (
-        <GlassCard className="overflow-hidden p-0">
-          <Image
-            src={data.coverImageUrl}
-            alt="Cover"
-            width={1200}
-            height={520}
-            className="h-64 w-full object-cover sm:h-80"
-          />
-        </GlassCard>
-      )}
-
-      <GlassCard>
-        <div className="flex flex-wrap items-center gap-3">
-          <Pill>{data.addressLine || "Sem endereço"}</Pill>
-          {data.badgeLabel ? <Pill className="bg-brand-primary/20 text-brand-primary">{data.badgeLabel}</Pill> : null}
-          {data.isFavorite != null ? (
-            <Pill className={data.isFavorite ? "text-brand-primary" : "text-white/70"}>
-              {data.isFavorite ? "Favorito" : "Não favorito"}
-            </Pill>
-          ) : null}
-          {data.rating != null ? (
-            <Pill>
-              Avaliação {data.rating} ({data.reviewCount ?? 0})
-            </Pill>
-          ) : null}
-        </div>
-      </GlassCard>
-
-      <GlassCard>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <Field label="Descrição" value={data.description} />
-          <Field label="Bairro" value={data.neighborhood} />
-          <Field label="Telefone" value={data.phone} />
-          <Field label="Whatsapp" value={data.whatsapp} />
-          <Field label="Email" value={data.email} />
-          <Field label="Instagram" value={data.instagram} />
-          <Field label="Facebook" value={data.facebook ?? undefined} />
-          <Field label="Website" value={data.website} />
-          <Field label="Horário" value={data.openingHours} />
-          <Field label="Categorias" value={(data.categories || []).join(", ") || undefined} />
-          <Field
-            label="Coordenadas"
-            value={
-              data.latitude != null && data.longitude != null ? `${data.latitude}, ${data.longitude}` : undefined
-            }
-          />
-          <Field
-            label="Criado em"
-            value={data.createdAt ? new Date(data.createdAt).toLocaleString() : undefined}
-          />
-        </div>
-      </GlassCard>
-
-      {images.length > 0 && (
-        <GlassCard className="space-y-4">
-          <p className="text-sm font-semibold text-white">Imagens</p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {images.map((img) => (
-              <div key={img.id} className="relative overflow-hidden rounded-xl border border-white/10">
-                <Image
-                  src={img.url}
-                  alt={`Imagem ${img.id}`}
-                  width={400}
-                  height={300}
-                  className="h-32 w-full object-cover"
-                />
-                {img.isCover && (
-                  <span className="absolute left-2 top-2 rounded bg-black/70 px-2 py-1 text-xs text-white">Capa</span>
-                )}
+      {showEdit && (
+        <>
+          <GlassCard className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-lg font-semibold text-white">Editar informações básicas</p>
+                <p className="text-sm text-white/70">
+                  Atualize dados do brechó. Nome e endereço não podem ser vazios.
+                </p>
               </div>
-            ))}
-          </div>
-        </GlassCard>
+              <button
+                onClick={handleSaveBasic}
+                disabled={isSavingStore || savingAll}
+                className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+              >
+                {savingAll || isSavingStore ? "Salvando..." : "Salvar alterações"}
+              </button>
+            </div>
+
+            {formError ? <p className="text-sm text-red-300">{formError}</p> : null}
+            {formMessage ? <p className="text-sm text-brand-muted">{formMessage}</p> : null}
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <LabeledInput label="Nome *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
+              <LabeledInput
+                label="Tagline"
+                value={form.tagline}
+                onChange={(v) => setForm({ ...form, tagline: v })}
+                placeholder="Frase curta"
+              />
+              <LabeledTextArea
+                label="Descrição"
+                value={form.description}
+                onChange={(v) => setForm({ ...form, description: v })}
+                rows={4}
+              />
+              <LabeledInput
+                label="Horário de funcionamento"
+                value={form.openingHours}
+                onChange={(v) => setForm({ ...form, openingHours: v })}
+                placeholder="Ex: Seg-Sáb 10h-18h"
+              />
+              <div className="relative">
+                <LabeledInput
+                  label="Endereço *"
+                  value={form.addressLine}
+                  onChange={(v) => {
+                    setAddressShouldFetch(true);
+                    setAddressQuery(v);
+                    setForm({
+                      ...form,
+                      addressLine: v,
+                      neighborhood: "",
+                      latitude: "",
+                      longitude: ""
+                    });
+                  }}
+                  placeholder="Rua, número, cidade"
+                />
+                <AddressSuggestions
+                  loading={addressLoading}
+                  error={addressError}
+                  suggestions={addressSuggestions}
+                  onSelect={(s) => {
+                    setForm({
+                      ...form,
+                      addressLine: s.placeName,
+                      neighborhood: s.neighborhood ?? "",
+                      latitude: s.lat != null ? String(s.lat) : "",
+                      longitude: s.lng != null ? String(s.lng) : ""
+                    });
+                    setAddressSuggestions([]);
+                    setAddressError(null);
+                    setFormMessage("Endereço atualizado a partir da sugestão.");
+                    setAddressShouldFetch(false);
+                    setAddressQuery("");
+                  }}
+                />
+              </div>
+              <LabeledInput label="Bairro" value={form.neighborhood} readOnly disabled />
+              <LabeledInput label="Telefone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+              <LabeledInput
+                label="Whatsapp"
+                value={form.whatsapp}
+                onChange={(v) => setForm({ ...form, whatsapp: v })}
+              />
+              <LabeledInput label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
+              <LabeledInput
+                label="Instagram"
+                value={form.instagram}
+                onChange={(v) => setForm({ ...form, instagram: v })}
+                placeholder="@usuario"
+              />
+              <LabeledInput
+                label="Facebook"
+                value={form.facebook}
+                onChange={(v) => setForm({ ...form, facebook: v })}
+              />
+              <LabeledInput
+                label="Website"
+                value={form.website}
+                onChange={(v) => setForm({ ...form, website: v })}
+                placeholder="https://"
+              />
+              <LabeledInput
+                label="Categorias (separadas por vírgula)"
+                value={form.categories}
+                onChange={(v) => setForm({ ...form, categories: v })}
+                placeholder="vintage, jeans, acessórios"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <LabeledInput
+                  label="Latitude"
+                  value={form.latitude}
+                  placeholder="-23.55"
+                  readOnly
+                  disabled
+                />
+                <LabeledInput
+                  label="Longitude"
+                  value={form.longitude}
+                  placeholder="-46.63"
+                  readOnly
+                  disabled
+                />
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-lg font-semibold text-white">Fotos</p>
+                <p className="text-sm text-white/70">Máximo 10 fotos. JPEG ou WEBP até 2MB.</p>
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:bg-white/10">
+                Adicionar fotos
+                <input
+                  type="file"
+                  accept={ALLOWED_TYPES.join(",")}
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    handleAddPhotos(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+
+            {photoError ? <p className="text-sm text-red-300">{photoError}</p> : null}
+            {photoStatus ? <p className="text-sm text-brand-muted">{photoStatus}</p> : null}
+
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {photoDrafts.map((photo, index) => (
+                <div key={photo.localId} className="group relative overflow-hidden rounded-xl border border-white/10">
+                  {photo.url ? (
+                    <Image src={photo.url} alt={`Foto ${index + 1}`} width={400} height={300} className="h-32 w-full object-cover" />
+                  ) : (
+                    <img src={photo.previewUrl} alt={`Pré-visualização ${index + 1}`} className="h-32 w-full object-cover" />
+                  )}
+                  <div className="absolute inset-0 flex flex-col justify-between bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex items-center gap-1 px-2 pt-2">
+                      <Chip active={index === 0}>Capa</Chip>
+                      <button
+                        type="button"
+                        onClick={() => setAsCover(photo.localId)}
+                        className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/20"
+                        disabled={index === 0}
+                      >
+                        Definir capa
+                      </button>
+                    </div>
+                    <div className="flex justify-between gap-1 px-2 pb-2">
+                      <button
+                        type="button"
+                        onClick={() => movePhoto(photo.localId, -1)}
+                        disabled={index === 0}
+                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20 disabled:opacity-50"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => movePhoto(photo.localId, 1)}
+                        disabled={index === photoDrafts.length - 1}
+                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20 disabled:opacity-50"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(photo.localId)}
+                        className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/30"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </div>
+                  {index === 0 && (
+                    <span className="absolute left-2 top-2 rounded bg-black/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+                      Capa
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        </>
       )}
     </div>
   );
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
+function buildPhotoDrafts(store: ThriftStore): PhotoDraft[] {
+  const imgs = (store.images ?? []).slice().sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+  const coverIndex = imgs.findIndex((i) => i.isCover);
+  if (coverIndex > 0) {
+    const [cover] = imgs.splice(coverIndex, 1);
+    imgs.unshift(cover);
+  }
+  return imgs.map((img) => ({
+    localId: `existing-${img.id}`,
+    id: img.id,
+    url: img.url,
+    fileKey: undefined
+  }));
+}
+
+function normalizeCategories(raw: string) {
+  return raw
+    .split(",")
+    .map((c) => c.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((value, index, self) => self.indexOf(value) === index);
+}
+
+function extractNeighborhood(feature: any): string | undefined {
+  if (!feature?.context) return undefined;
+  const ctx = feature.context as Array<{ id: string; text: string }>;
+  const neighborhood = ctx.find((c) => c.id?.startsWith("neighborhood"));
+  const place = ctx.find((c) => c.id?.startsWith("place"));
+  return neighborhood?.text || place?.text;
+}
+
+function arePhotosDirty(drafts: PhotoDraft[], deleted: (string | number)[], baseImages: ThriftStore["images"]): boolean {
+  if (deleted.length > 0) return true;
+  if (drafts.some((d) => d.file)) return true;
+  const base = (baseImages ?? [])
+    .slice()
+    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+    .map((i) => i.id);
+  const current = drafts.filter((d) => d.id).map((d) => d.id as string | number);
+  if (base.length !== current.length) return true;
+  for (let i = 0; i < base.length; i++) {
+    if (base[i] !== current[i]) return true;
+  }
+  return false;
+}
+
+async function processPhotosFlow({
+  storeId,
+  drafts,
+  deletedPhotoIds,
+  setStatus,
+  setError,
+  setDrafts,
+  resetDeleted
+}: {
+  storeId: string;
+  drafts: PhotoDraft[];
+  deletedPhotoIds: (string | number)[];
+  setStatus: (v: string | null) => void;
+  setError: (v: string | null) => void;
+  setDrafts: (d: PhotoDraft[]) => void;
+  resetDeleted: () => void;
+}) {
+  const uniqueDeletes = Array.from(new Set(deletedPhotoIds));
+  const draftsCopy = drafts.map((p) => ({ ...p }));
+  const pending = draftsCopy.filter((d) => d.file && !d.fileKey);
+
+  if (pending.length > 0) {
+    setStatus("Solicitando URLs de upload...");
+    const uploadRes = await api.post<{ uploads: PhotoUploadSlot[] }>(`/stores/${storeId}/photos/uploads`, {
+      count: pending.length,
+      contentTypes: pending.map((p) => p.file?.type || "image/jpeg")
+    });
+
+    const slots = uploadRes.uploads ?? [];
+    if (slots.length !== pending.length) throw new Error("Resposta inesperada ao solicitar uploads.");
+
+    setStatus("Enviando arquivos...");
+    await Promise.all(
+      pending.map((draft, idx) => {
+        const slot = slots[idx];
+        draft.fileKey = slot.fileKey;
+        return fetch(slot.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": slot.contentType },
+          body: draft.file!
+        }).then((res) => {
+          if (!res.ok) throw new Error("Falha ao enviar arquivo de imagem.");
+        });
+      })
+    );
+  }
+
+  const photosPayload = draftsCopy.map((draft, index) => {
+    if (!draft.id && !draft.fileKey) {
+      throw new Error("Arquivo novo sem fileKey. Tente novamente.");
+    }
+    return {
+      position: index,
+      ...(draft.id ? { photoId: draft.id } : {}),
+      ...(draft.fileKey ? { fileKey: draft.fileKey } : {})
+    };
+  });
+
+  setStatus("Registrando ordem e capa...");
+  const updated = await api.put<ThriftStore>(`/stores/${storeId}/photos`, {
+    photos: photosPayload,
+    deletePhotoIds: uniqueDeletes.length ? uniqueDeletes : undefined
+  });
+
+  setDrafts(buildPhotoDrafts(updated));
+  resetDeleted();
+  setStatus("Fotos atualizadas.");
+}
+
+function AddressSuggestions({
+  loading,
+  error,
+  suggestions,
+  onSelect
+}: {
+  loading: boolean;
+  error: string | null;
+  suggestions: AddressSuggestion[];
+  onSelect: (s: AddressSuggestion) => void;
+}) {
+  if (error) {
+    return <p className="mt-1 text-xs text-red-300">{error}</p>;
+  }
+  if (!loading && suggestions.length === 0) return null;
   return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-white/50">{label}</p>
-      <p className="mt-1 text-sm text-white">{value || "-"}</p>
+    <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-white/10 bg-brand-forest/95 shadow-xl backdrop-blur">
+      {loading ? (
+        <p className="px-3 py-2 text-xs text-white/70">Buscando sugestões...</p>
+      ) : (
+        suggestions.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => onSelect(s)}
+            className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-white hover:bg-white/10"
+          >
+            <span className="font-semibold">{s.label}</span>
+            <span className="text-xs text-white/70">{s.placeName}</span>
+            {s.neighborhood ? <span className="text-[11px] text-white/60">Bairro: {s.neighborhood}</span> : null}
+          </button>
+        ))
+      )}
     </div>
+  );
+}
+
+function LabeledInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  readOnly
+}: {
+  label: string;
+  value: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="text-white/70">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => (disabled || readOnly || !onChange ? undefined : onChange(e.target.value))}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        disabled={disabled}
+        className={clsx(
+          "rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40",
+          disabled || readOnly ? "cursor-not-allowed opacity-70 focus:ring-0" : ""
+        )}
+      />
+    </label>
+  );
+}
+
+function LabeledTextArea({
+  label,
+  value,
+  onChange,
+  rows = 3
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  rows?: number;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="text-white/70">{label}</span>
+      <textarea
+        value={value}
+        rows={rows}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+      />
+    </label>
+  );
+}
+
+function Chip({ children, active }: { children: React.ReactNode; active?: boolean }) {
+  return (
+    <span
+      className={clsx(
+        "rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-wide",
+        active ? "bg-brand-primary text-brand-forest" : "bg-white/10 text-white"
+      )}
+    >
+      {children}
+    </span>
   );
 }

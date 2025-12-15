@@ -5,18 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        highlight: "#B55D05",
-        background: "#FFFFFF",
-        section: "#F3F4F6",
-        textDark: "#374151",
-        textSubtle: "#6B7280",
-        accent: "#EC4899",
+        highlight: "#e5aa00",
+        background: "#f0cdb5",
+        section: "#b76801",
+        textDark: "#833000",
+        textSubtle: "#a73c00",
+        accent: "#b14300",
         brand: {
-          primary: "#2bee79",
-          forest: "#112218",
-          card: "#234832",
-          muted: "#92c9a8",
-          surface: "#0f1a13"
+          primary: "#e5aa00",
+          forest: "#833000",
+          card: "#b14300",
+          muted: "#f0cdb5",
+          surface: "#a73c00"
         }
       }
     }
