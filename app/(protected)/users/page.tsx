@@ -36,6 +36,12 @@ export default function UsersPage() {
         subtitle="Gerencie contas, privilégios e donos de brechó."
         actions={
           <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/users/new"
+              className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-white/20"
+            >
+              Novo usuário
+            </Link>
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
