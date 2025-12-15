@@ -44,6 +44,24 @@ const ALLOWED_TYPES = ["image/jpeg", "image/webp", "image/jpg", "image/pjpeg", "
 const MAX_SIZE = 2 * 1024 * 1024;
 const ADDRESS_DEBOUNCE_MS = 500;
 
+const emptyFormState: StoreFormState = {
+  name: "",
+  tagline: "",
+  description: "",
+  openingHours: "",
+  addressLine: "",
+  neighborhood: "",
+  phone: "",
+  whatsapp: "",
+  email: "",
+  instagram: "",
+  facebook: "",
+  website: "",
+  categories: "",
+  latitude: "",
+  longitude: ""
+};
+
 type AddressSuggestion = {
   id: string;
   label: string;
@@ -56,10 +74,11 @@ type AddressSuggestion = {
 export default function StoreDetailPage() {
   const params = useParams<{ id: string }>();
   const storeId = params?.id as string;
+  const isCreate = storeId === "new";
   const router = useRouter();
   const qc = useQueryClient();
 
-  const [form, setForm] = useState<StoreFormState | null>(null);
+  const [form, setForm] = useState<StoreFormState | null>(isCreate ? emptyFormState : null);
   const [showEdit, setShowEdit] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<string | null>(null);
@@ -78,7 +97,7 @@ export default function StoreDetailPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["store", storeId],
     queryFn: () => api.get<ThriftStore>(`/stores/${storeId}`),
-    enabled: Boolean(storeId)
+    enabled: Boolean(storeId) && !isCreate
   });
 
   const deleteMutation = useMutation({
@@ -96,6 +115,15 @@ export default function StoreDetailPage() {
     onSuccess: async () => {
       setFormError(null);
       await qc.invalidateQueries({ queryKey: ["store", storeId] });
+    },
+    onError: () => setFormError("Não foi possível salvar. Verifique os campos e tente novamente.")
+  });
+
+  const { mutateAsync: createStore, isPending: isCreatingStore } = useMutation({
+    mutationFn: (payload: any) => api.post<ThriftStore>(`/stores`, payload),
+    onSuccess: async () => {
+      setFormError(null);
+      await qc.invalidateQueries({ queryKey: ["stores"] });
     },
     onError: () => setFormError("Não foi possível salvar. Verifique os campos e tente novamente.")
   });
@@ -188,12 +216,17 @@ export default function StoreDetailPage() {
     }
   };
 
-  if (isLoading) return <div className="p-4">Carregando...</div>;
-  if (error || !data) return <div className="p-4 text-red-600">Erro ao carregar brechó.</div>;
-  if (!form) return null;
+  if (isCreate) {
+    if (!form) return null;
+  } else {
+    if (isLoading) return <div className="p-4">Carregando...</div>;
+    if (error || !data) return <div className="p-4 text-red-600">Erro ao carregar brechó.</div>;
+    if (!form) return null;
+  }
 
   const handleSaveBasic = async () => {
-    if (!data || !form) return;
+    if (!form) return;
+    const current = isCreate ? null : data;
     setFormError(null);
     setFormMessage(null);
     setPhotoError(null);
@@ -215,42 +248,48 @@ export default function StoreDetailPage() {
       setFormError("O nome não pode ficar em branco.");
       return;
     }
-    if (name !== data.name) {
+    if (name !== (current?.name ?? "")) {
       payload.name = name;
       changes++;
     }
 
     const addressLine = form.addressLine.trim();
-    if (addressLine === "" && data.addressLine) {
-      setFormError("O endereço não pode ser vazio. Use um valor ou remova manualmente no backend.");
+    if (addressLine === "") {
+      setFormError("O endereço não pode ficar em branco.");
       return;
     }
-    if (addressLine !== (data.addressLine ?? "")) {
+    if (addressLine !== (current?.addressLine ?? "")) {
       payload.addressLine = addressLine === "" ? null : addressLine;
       changes++;
     }
 
-    const applyField = (key: keyof StoreFormState, current: any) => {
+    const applyField = (key: keyof StoreFormState, currentVal: any) => {
       const next = nullable(form[key]);
-      if (safeCompare(next) !== safeCompare(current)) {
+      if (safeCompare(next) !== safeCompare(currentVal)) {
         payload[key] = next;
         changes++;
       }
     };
 
-    applyField("tagline", data.tagline);
-    applyField("description", data.description);
-    applyField("openingHours", data.openingHours);
-    applyField("neighborhood", data.neighborhood);
-    applyField("phone", data.phone);
-    applyField("whatsapp", data.whatsapp);
-    applyField("email", data.email);
-    applyField("instagram", data.instagram);
-    applyField("facebook", data.facebook);
-    applyField("website", data.website);
+    applyField("tagline", current?.tagline);
+    if (isCreate && form.description.trim() === "") {
+      setFormError("A descrição é obrigatória.");
+      return;
+    }
+    applyField("description", current?.description);
+    applyField("openingHours", current?.openingHours);
+    applyField("neighborhood", current?.neighborhood);
+    if (isCreate && form.phone.trim() === "") {
+      setFormError("O telefone é obrigatório.");
+      return;
+    }
+    applyField("phone", current?.phone);
+    applyField("whatsapp", current?.whatsapp);
+    applyField("email", current?.email);
+    // social handled separately
 
     const newCategories = normalizeCategories(form.categories);
-    const currentCategories = normalizeCategories((data.categories ?? []).join(","));
+    const currentCategories = normalizeCategories((current?.categories ?? []).join(","));
     if (newCategories.join(",") !== currentCategories.join(",")) {
       payload.categories = newCategories;
       changes++;
@@ -261,7 +300,7 @@ export default function StoreDetailPage() {
     const hasLat = latText !== "";
     const hasLng = lngText !== "";
 
-    const addressChanged = addressLine !== (data.addressLine ?? "");
+    const addressChanged = addressLine !== (current?.addressLine ?? "");
     if (addressChanged && (!hasLat || !hasLng)) {
       setFormError("Selecione uma sugestão para preencher latitude e longitude ao alterar o endereço.");
       return;
@@ -279,14 +318,27 @@ export default function StoreDetailPage() {
         setFormError("Latitude e longitude devem ser números.");
         return;
       }
-      if (latNum !== data.latitude || lngNum !== data.longitude) {
+      if (latNum !== current?.latitude || lngNum !== current?.longitude) {
         payload.latitude = latNum;
         payload.longitude = lngNum;
         changes++;
       }
+    } else if (isCreate) {
+      setFormError("Latitude e longitude são obrigatórias.");
+      return;
     }
 
-    const photosDirty = arePhotosDirty(photoDrafts, deletedPhotoIds, data.images ?? []);
+    const socialPayload = buildSocialPayload(form, current);
+    if (socialPayload) {
+      payload.social = socialPayload;
+      // avoid sending deprecated flat fields
+      delete payload.facebook;
+      delete payload.instagram;
+      delete payload.website;
+    }
+
+    const baseImages = isCreate ? [] : data.images ?? [];
+    const photosDirty = arePhotosDirty(photoDrafts, deletedPhotoIds, baseImages);
 
     if (!photosDirty && changes === 0) {
       setFormMessage("Nada para salvar — nenhuma alteração detectada.");
@@ -295,9 +347,19 @@ export default function StoreDetailPage() {
     }
 
     try {
-      if (photosDirty) {
+      let targetStoreId = storeId;
+
+      if (isCreate) {
+        const created = await createStore(payload);
+        targetStoreId = created.id;
+        setFormMessage("Brechó criado. Salvando fotos...");
+      } else if (changes > 0) {
+        await updateStore(payload);
+      }
+
+      if (photosDirty && targetStoreId) {
         await processPhotosFlow({
-          storeId,
+          storeId: targetStoreId,
           drafts: photoDrafts,
           deletedPhotoIds,
           setStatus: setPhotoStatus,
@@ -305,11 +367,11 @@ export default function StoreDetailPage() {
           setDrafts: setPhotoDrafts,
           resetDeleted: () => setDeletedPhotoIds([])
         });
-        await qc.invalidateQueries({ queryKey: ["store", storeId] });
+        await qc.invalidateQueries({ queryKey: ["store", targetStoreId] });
       }
 
-      if (changes > 0) {
-        await updateStore(payload);
+      if (isCreate && targetStoreId !== storeId) {
+        router.replace(`/stores/${targetStoreId}`);
       }
 
       setFormMessage("Alterações salvas.");
@@ -387,103 +449,34 @@ export default function StoreDetailPage() {
     });
   };
 
-  const savePhotos = async () => {
-    setPhotoError(null);
-    setPhotoStatus(null);
-    setSavingPhotos(true);
-
-    if (photoDrafts.length === 0) {
-      setPhotoError("Adicione ao menos uma foto para salvar.");
-      setSavingPhotos(false);
-      return;
-    }
-    if (photoDrafts.length > MAX_PHOTOS) {
-      setPhotoError(`Máximo de ${MAX_PHOTOS} fotos.`);
-      setSavingPhotos(false);
-      return;
-    }
-
-    const draftsCopy = photoDrafts.map((p) => ({ ...p }));
-    const pending = draftsCopy.filter((d) => d.file && !d.fileKey);
-
-    try {
-      if (pending.length > 0) {
-        setPhotoStatus("Solicitando URLs de upload...");
-        const uploadRes = await api.post<{ uploads: PhotoUploadSlot[] }>(`/stores/${storeId}/photos/uploads`, {
-          count: pending.length,
-          contentTypes: pending.map((p) => p.file?.type || "image/jpeg")
-        });
-
-        const slots = uploadRes.uploads ?? [];
-        if (slots.length !== pending.length) {
-          throw new Error("Resposta inesperada ao solicitar uploads.");
-        }
-
-        setPhotoStatus("Enviando arquivos...");
-        await Promise.all(
-          pending.map((draft, idx) => {
-            const slot = slots[idx];
-            draft.fileKey = slot.fileKey;
-            return fetch(slot.uploadUrl, {
-              method: "PUT",
-              headers: { "Content-Type": slot.contentType },
-              body: draft.file!
-            }).then((res) => {
-              if (!res.ok) throw new Error("Falha ao enviar arquivo de imagem.");
-            });
-          })
-        );
-      }
-
-      const photosPayload = draftsCopy.map((draft, index) => {
-        if (!draft.id && !draft.fileKey) {
-          throw new Error("Arquivo novo sem fileKey. Tente novamente.");
-        }
-        return {
-          position: index,
-          ...(draft.id ? { photoId: draft.id } : {}),
-          ...(draft.fileKey ? { fileKey: draft.fileKey } : {})
-        };
-      });
-
-      setPhotoStatus("Registrando ordem e capa...");
-      const updated = await api.put<ThriftStore>(`/stores/${storeId}/photos`, {
-        photos: photosPayload,
-        deletePhotoIds: deletedPhotoIds.length ? deletedPhotoIds : undefined
-      });
-
-      setPhotoDrafts(buildPhotoDrafts(updated));
-      setDeletedPhotoIds([]);
-      setPhotoStatus("Fotos atualizadas.");
-      await qc.invalidateQueries({ queryKey: ["store", storeId] });
-    } catch (err) {
-      console.error(err);
-      setPhotoError("Não foi possível salvar as fotos. Verifique os arquivos e tente novamente.");
-    } finally {
-      setSavingPhotos(false);
-    }
-  };
-
   return (
     <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-white">
       <PageHeader
-        title={data.name}
-        subtitle={data.tagline || data.addressLine || "Detalhes do brechó"}
+        title={isCreate ? "Novo brechó" : data?.name || "Brechó"}
+        subtitle={
+          isCreate
+            ? "Preencha os dados para criar um novo brechó."
+            : data?.tagline || data?.addressLine || "Detalhes do brechó"
+        }
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setShowEdit((v) => !v)}
-              className="rounded-xl border border-brand-card/40 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-            >
-              {showEdit ? "Fechar edição" : "Editar"}
-            </button>
-            <button
-              onClick={onDelete}
-              className="rounded-xl border border-red-400/50 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
-            </button>
+            {!isCreate && (
+              <>
+                <button
+                  onClick={() => setShowEdit((v) => !v)}
+                  className="rounded-xl border border-brand-card/40 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+                >
+                  {showEdit ? "Fechar edição" : "Editar"}
+                </button>
+                <button
+                  onClick={onDelete}
+                  className="rounded-xl border border-red-400/50 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+                </button>
+              </>
+            )}
           </div>
         }
       />
@@ -491,21 +484,21 @@ export default function StoreDetailPage() {
       {showEdit && (
         <>
           <GlassCard className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-lg font-semibold text-white">Editar informações básicas</p>
-                <p className="text-sm text-white/70">
-                  Atualize dados do brechó. Nome e endereço não podem ser vazios.
-                </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-semibold text-white">Editar informações básicas</p>
+                  <p className="text-sm text-white/70">
+                    Atualize dados do brechó. Nome e endereço não podem ser vazios.
+                  </p>
+                </div>
+                <button
+                  onClick={handleSaveBasic}
+                  disabled={isSavingStore || isCreatingStore || savingAll}
+                  className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+                >
+                  {savingAll || isSavingStore || isCreatingStore ? "Salvando..." : "Salvar alterações"}
+                </button>
               </div>
-              <button
-                onClick={handleSaveBasic}
-                disabled={isSavingStore || savingAll}
-                className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
-              >
-                {savingAll || isSavingStore ? "Salvando..." : "Salvar alterações"}
-              </button>
-            </div>
 
             {formError ? <p className="text-sm text-red-300">{formError}</p> : null}
             {formMessage ? <p className="text-sm text-brand-muted">{formMessage}</p> : null}
@@ -733,6 +726,24 @@ function extractNeighborhood(feature: any): string | undefined {
   return neighborhood?.text || place?.text;
 }
 
+function buildSocialPayload(form: StoreFormState, current: ThriftStore | null) {
+  const social = {
+    facebook: form.facebook.trim() || null,
+    instagram: form.instagram.trim() || null,
+    website: form.website.trim() || null
+  };
+  const existing = {
+    facebook: current?.facebook ?? null,
+    instagram: current?.instagram ?? null,
+    website: current?.website ?? null
+  };
+
+  const changed =
+    social.facebook !== existing.facebook || social.instagram !== existing.instagram || social.website !== existing.website;
+  if (!changed) return null;
+  return social;
+}
+
 function arePhotosDirty(drafts: PhotoDraft[], deleted: (string | number)[], baseImages: ThriftStore["images"]): boolean {
   if (deleted.length > 0) return true;
   if (drafts.some((d) => d.file)) return true;
@@ -765,6 +776,7 @@ async function processPhotosFlow({
   setDrafts: (d: PhotoDraft[]) => void;
   resetDeleted: () => void;
 }) {
+  setError(null);
   const uniqueDeletes = Array.from(new Set(deletedPhotoIds));
   const draftsCopy = drafts.map((p) => ({ ...p }));
   const pending = draftsCopy.filter((d) => d.file && !d.fileKey);
