@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import clsx from "classnames";
 import { api } from "@/lib/api";
+import { toStorageObjectUrl } from "@/lib/storage";
 import type { User } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -133,7 +134,7 @@ export default function UserDetailPage() {
     }
 
     try {
-      let avatarKey = form.avatarUrl.trim() || undefined;
+      let avatarUrl = form.avatarUrl.trim() || undefined;
       if (avatarFile) {
         const contentType = avatarFile.type || "image/jpeg";
         setAvatarStatus("Solicitando upload...");
@@ -145,7 +146,7 @@ export default function UserDetailPage() {
           body: avatarFile
         });
         if (!putRes.ok) throw new Error("Falha ao enviar avatar.");
-        avatarKey = slot.fileKey;
+        avatarUrl = toStorageObjectUrl(slot.uploadUrl);
         setAvatarStatus("Avatar enviado.");
       }
 
@@ -171,7 +172,7 @@ export default function UserDetailPage() {
         payload.notifyNewStores = form.notifyNewStores;
       if (typeof form.notifyPromos === "boolean" && form.notifyPromos !== current.notifyPromos)
         payload.notifyPromos = form.notifyPromos;
-      if (avatarKey && avatarKey !== current.avatarUrl) payload.avatarUrl = avatarKey;
+      if (avatarUrl && avatarUrl !== current.avatarUrl) payload.avatarUrl = avatarUrl;
 
       if (Object.keys(payload).length === 0) {
         setFormMessage("Nada para salvar.");

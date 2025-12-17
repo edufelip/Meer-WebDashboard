@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import clsx from "classnames";
 import { api } from "@/lib/api";
+import { toStorageObjectUrl } from "@/lib/storage";
 import type { GuideContent } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -32,18 +33,6 @@ const emptyForm: ContentForm = {
 
 const MAX_IMAGE = 5 * 1024 * 1024;
 const ALLOWED_IMG = ["image/jpeg", "image/png", "image/webp"];
-
-function buildPublicImageUrl(uploadUrl: string, fileKey: string) {
-  try {
-    const url = new URL(uploadUrl);
-    const [, bucket, ...rest] = url.pathname.split("/"); // ['', 'bucket', 'path', ...]
-    if (!bucket || rest.length === 0) return fileKey;
-    const objectPath = rest.join("/");
-    return `https://storage.googleapis.com/${bucket}/${objectPath}`;
-  } catch {
-    return fileKey;
-  }
-}
 
 export default function ContentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -146,7 +135,7 @@ export default function ContentDetailPage() {
           body: file
         });
         if (!putRes.ok) throw new Error("Falha ao enviar imagem.");
-        imageUrl = buildPublicImageUrl(slot.uploadUrl, slot.fileKey);
+        imageUrl = toStorageObjectUrl(slot.uploadUrl);
         setStatus("Imagem enviada.");
       }
 
