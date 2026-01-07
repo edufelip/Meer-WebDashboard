@@ -86,26 +86,28 @@ export default function ContentsPage() {
               <th className="py-3 px-4">ID</th>
               <th className="py-3 px-4">Título</th>
               <th className="py-3 px-4">Brechó</th>
+              <th className="py-3 px-4">Curtidas</th>
+              <th className="py-3 px-4">Comentários</th>
               <th className="py-3 px-4">Criado em</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
               <tr>
-                <td className="py-3 px-4" colSpan={3}>
+                <td className="py-3 px-4" colSpan={6}>
                   Carregando...
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td className="py-3 px-4 text-red-300" colSpan={3}>
+                <td className="py-3 px-4 text-red-300" colSpan={6}>
                   Erro ao carregar conteúdos
                 </td>
               </tr>
             )}
             {!isLoading && !error && items.length === 0 && (
-              <EmptyStateRow colSpan={4} title="Nenhum conteúdo encontrado" description="Altere o filtro ou verifique se há posts novos." />
+              <EmptyStateRow colSpan={6} title="Nenhum conteúdo encontrado" description="Altere o filtro ou verifique se há posts novos." />
             )}
             {items.map((c) => (
               <tr key={c.id} className="border-t border-black/5 hover:bg-black/5">
@@ -116,6 +118,8 @@ export default function ContentsPage() {
                   </Link>
                 </td>
                 <td className="py-3 px-4 text-white">{c.thriftStoreName ?? c.thriftStoreId}</td>
+                <td className="py-3 px-4 text-white">{c.likeCount ?? 0}</td>
+                <td className="py-3 px-4 text-white">{c.commentCount ?? 0}</td>
                 <td className="py-3 px-4 text-white">
                   {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "-"}
                 </td>

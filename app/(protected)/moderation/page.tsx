@@ -34,7 +34,26 @@ export default function ModerationPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-textDark">
-      <PageHeader title="Moderação" subtitle="Fila de contatos e solicitações do público." />
+      <PageHeader
+        title="Moderação"
+        subtitle="Fila de contatos e solicitações do público."
+        actions={
+          <div className="flex items-center gap-3">
+            <Link
+              href="/moderation"
+              className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white"
+            >
+              Contatos
+            </Link>
+            <Link
+              href="/moderation/comments"
+              className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-textDark transition hover:scale-[1.01] hover:bg-black/5"
+            >
+              Comentários
+            </Link>
+          </div>
+        }
+      />
 
       <GlassCard className="overflow-hidden">
         <table className="w-full text-left text-sm text-textDark">

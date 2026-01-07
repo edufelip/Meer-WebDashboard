@@ -42,6 +42,22 @@ export type GuideContent = {
   thriftStoreName?: string;
   createdAt?: string;
   status?: string;
+  likeCount?: number;
+  commentCount?: number;
+};
+
+export type ContentComment = {
+  id: string;
+  body: string;
+  userId: string;
+  userDisplayName?: string;
+  userPhotoUrl?: string | null;
+  createdAt?: string;
+  edited?: boolean;
+  contentId?: string;
+  contentTitle?: string;
+  thriftStoreId?: string;
+  thriftStoreName?: string;
 };
 
 export type User = {

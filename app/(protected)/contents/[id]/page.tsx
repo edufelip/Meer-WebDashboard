@@ -7,9 +7,11 @@ import Image from "next/image";
 import clsx from "classnames";
 import { api } from "@/lib/api";
 import { toStorageObjectUrl } from "@/lib/storage";
-import type { GuideContent } from "@/types/index";
+import type { ContentComment, GuideContent, PageResponse } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { EmptyStateRow } from "@/components/dashboard/EmptyStateRow";
+import { Pill } from "@/components/dashboard/Pill";
 
 type ContentForm = {
   title: string;
@@ -33,6 +35,7 @@ const emptyForm: ContentForm = {
 
 const MAX_IMAGE = 5 * 1024 * 1024;
 const ALLOWED_IMG = ["image/jpeg", "image/png", "image/webp"];
+const COMMENT_PAGE_SIZE = 20;
 
 export default function ContentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -45,10 +48,24 @@ export default function ContentDetailPage() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [commentsPage, setCommentsPage] = useState(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["content", contentId],
     queryFn: () => api.get<GuideContent>(`/dashboard/contents/${contentId}`),
+    enabled: Boolean(contentId) && !isCreate
+  });
+
+  const {
+    data: commentsData,
+    isLoading: commentsLoading,
+    error: commentsError
+  } = useQuery({
+    queryKey: ["content-comments", contentId, commentsPage],
+    queryFn: () =>
+      api.get<PageResponse<ContentComment>>(
+        `/dashboard/contents/${contentId}/comments?page=${commentsPage}&pageSize=${COMMENT_PAGE_SIZE}`
+      ),
     enabled: Boolean(contentId) && !isCreate
   });
 
@@ -64,11 +81,25 @@ export default function ContentDetailPage() {
     });
   }, [data, isCreate]);
 
+  useEffect(() => {
+    if (!contentId || isCreate) return;
+    setCommentsPage(0);
+  }, [contentId, isCreate]);
+
   const deleteMutation = useMutation({
     mutationFn: () => api.del(`/dashboard/contents/${contentId}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contents"] });
       router.replace("/contents");
+    }
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => api.del(`/dashboard/contents/${contentId}/comments/${commentId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["content-comments", contentId] });
+      qc.invalidateQueries({ queryKey: ["content", contentId] });
+      qc.invalidateQueries({ queryKey: ["contents"] });
     }
   });
 
@@ -94,6 +125,14 @@ export default function ContentDetailPage() {
     if (!confirmed) return;
     deleteMutation.mutate(undefined, {
       onError: () => alert("Não foi possível excluir o conteúdo.")
+    });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    const confirmed = window.confirm("Deseja apagar este comentário?");
+    if (!confirmed) return;
+    deleteCommentMutation.mutate(commentId, {
+      onError: () => alert("Não foi possível apagar o comentário.")
     });
   };
 
@@ -177,6 +216,10 @@ export default function ContentDetailPage() {
   if (!isCreate && isLoading) return <div className="p-4">Carregando...</div>;
   if (!isCreate && (error || !data)) return <div className="p-4 text-red-600">Erro ao carregar conteúdo.</div>;
 
+  const commentItems = commentsData?.items ?? [];
+  const likeCount = data?.likeCount ?? 0;
+  const commentCount = data?.commentCount ?? commentItems.length ?? 0;
+
   return (
     <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-white">
       <PageHeader
@@ -194,6 +237,13 @@ export default function ContentDetailPage() {
           ) : null
         }
       />
+
+      {!isCreate ? (
+        <div className="flex flex-wrap gap-3">
+          <Pill>{likeCount} curtidas</Pill>
+          <Pill>{commentCount} comentários</Pill>
+        </div>
+      ) : null}
 
       <GlassCard className="space-y-4">
         <div className="flex items-center justify-between">
@@ -284,6 +334,90 @@ export default function ContentDetailPage() {
           />
         </div>
       </GlassCard>
+
+      {!isCreate ? (
+        <GlassCard className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-lg font-semibold text-white">Comentários</p>
+              <p className="text-sm text-white/70">Revise e remova comentários inadequados.</p>
+            </div>
+            <div className="text-sm text-white/70">
+              Página {commentsPage + 1} {commentsData?.hasNext ? "" : "(última)"}
+            </div>
+          </div>
+
+          <table className="w-full text-left text-sm text-textDark">
+            <thead>
+              <tr className="text-xs uppercase tracking-wide text-white/60">
+                <th className="py-3 px-4">ID</th>
+                <th className="py-3 px-4">Usuário</th>
+                <th className="py-3 px-4">Comentário</th>
+                <th className="py-3 px-4">Criado em</th>
+                <th className="py-3 px-4">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {commentsLoading && (
+                <tr>
+                  <td className="py-3 px-4" colSpan={5}>
+                    Carregando...
+                  </td>
+                </tr>
+              )}
+              {commentsError && (
+                <tr>
+                  <td className="py-3 px-4 text-red-300" colSpan={5}>
+                    Erro ao carregar comentários
+                  </td>
+                </tr>
+              )}
+              {!commentsLoading && !commentsError && commentItems.length === 0 && (
+                <EmptyStateRow colSpan={5} title="Nenhum comentário encontrado" description="Este conteúdo ainda não recebeu comentários." />
+              )}
+              {commentItems.map((comment) => (
+                <tr key={comment.id} className="border-t border-black/5 hover:bg-black/5">
+                  <td className="py-3 px-4 text-xs text-white">{comment.id}</td>
+                  <td className="py-3 px-4 text-white">
+                    {comment.userDisplayName ?? comment.userId ?? "—"}
+                  </td>
+                  <td className="py-3 px-4 text-white">{comment.body}</td>
+                  <td className="py-3 px-4 text-white">
+                    {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : "-"}
+                  </td>
+                  <td className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteComment(comment.id)}
+                      disabled={deleteCommentMutation.isPending}
+                      className="rounded-xl border border-red-400/50 bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+                    >
+                      Apagar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="flex items-center justify-between text-sm text-textDark">
+            <button
+              disabled={commentsPage === 0}
+              onClick={() => setCommentsPage((p) => Math.max(0, p - 1))}
+              className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <button
+              disabled={!commentsData?.hasNext}
+              onClick={() => setCommentsPage((p) => p + 1)}
+              className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+            >
+              Próxima
+            </button>
+          </div>
+        </GlassCard>
+      ) : null}
     </div>
   );
 }
