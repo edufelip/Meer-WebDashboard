@@ -1,6 +1,7 @@
 function isDevHost(hostname?: string | null): boolean {
   if (!hostname) return false;
   const host = hostname.toLowerCase();
+  if (host === "localhost" || host === "127.0.0.1") return true;
   return host.includes(".dev");
 }
 
