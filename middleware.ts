@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 function isDevHost(host?: string | null): boolean {
   if (!host) return false;
   const h = host.toLowerCase();
-  return h.includes(".dev");
+  return h.startsWith("dev.") || h.includes(".dev");
 }
 
 function pickBackendBase(host?: string | null): string {
