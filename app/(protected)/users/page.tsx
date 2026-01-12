@@ -18,7 +18,7 @@ export default function UsersPage() {
     queryKey: ["users", page, search, sort],
     queryFn: () =>
       api.get<PageResponse<User>>(
-        `/dashboard/users?page=${page}&pageSize=20&sort=${sort}${search ? `&search=${encodeURIComponent(search)}` : ""}`
+        `/dashboard/users?page=${page}&pageSize=20&sort=${sort}${search ? `&q=${encodeURIComponent(search)}` : ""}`
       )
   });
 
@@ -87,26 +87,27 @@ export default function UsersPage() {
               <th className="py-3 px-4">Nome</th>
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Papel</th>
+              <th className="py-3 px-4">Token Info</th>
               <th className="py-3 px-4">Criado em</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
               <tr>
-                <td className="py-3 px-4" colSpan={3}>
+                <td className="py-3 px-4" colSpan={6}>
                   Carregando...
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td className="py-3 px-4 text-red-300" colSpan={3}>
+                <td className="py-3 px-4 text-red-300" colSpan={6}>
                   Erro ao carregar usuários
                 </td>
               </tr>
             )}
             {!isLoading && !error && items.length === 0 && (
-              <EmptyStateRow colSpan={5} title="Nenhum usuário encontrado" description="Ajuste a busca ou cadastre novos usuários." />
+              <EmptyStateRow colSpan={6} title="Nenhum usuário encontrado" description="Ajuste a busca ou cadastre novos usuários." />
             )}
             {items.map((u) => (
               <tr key={u.id} className="border-t border-black/5 hover:bg-black/5">
@@ -118,6 +119,23 @@ export default function UsersPage() {
                 </td>
                 <td className="py-3 px-4 text-white">{u.email}</td>
                 <td className="py-3 px-4 text-white">{u.role ?? "-"}</td>
+                <td className="py-3 px-4 text-white">
+                  {u.pushTokens && u.pushTokens.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      {u.pushTokens.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => alert(JSON.stringify(t, null, 2))}
+                          className="text-left text-xs text-blue-400 hover:underline"
+                        >
+                          {t.id}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    "-"
+                  )}
+                </td>
                 <td className="py-3 px-4 text-white">
                   {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"}
                 </td>

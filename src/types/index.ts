@@ -60,6 +60,16 @@ export type ContentComment = {
   thriftStoreName?: string;
 };
 
+export type PushToken = {
+  id: string;
+  deviceId: string;
+  platform: string;
+  environment: string;
+  appVersion: string;
+  lastSeenAt: string;
+  createdAt: string;
+};
+
 export type User = {
   id: string;
   name: string;
@@ -72,6 +82,7 @@ export type User = {
   notifyNewStores?: boolean;
   notifyPromos?: boolean;
   ownedThriftStore?: ThriftStore | null;
+  pushTokens?: PushToken[];
 };
 
 export type PageResponse<T> = {
