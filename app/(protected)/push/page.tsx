@@ -1,8 +1,8 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { isDevDomain } from "@/lib/apiBase";
+import { isDevDomain, isLocalHost } from "@/lib/apiBase";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Pill } from "@/components/dashboard/Pill";
@@ -30,6 +30,19 @@ const ENV_OPTIONS: PushEnvironment[] = ["DEV", "STAGING", "PROD"];
 
 export default function PushPage() {
   const defaultEnv = useMemo<PushEnvironment>(() => (isDevDomain() ? "DEV" : "PROD"), []);
+  
+  const [enforcedEnv, setEnforcedEnv] = useState<PushEnvironment | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      // Don't enforce on localhost to allow testing different envs
+      if (!isLocalHost(host)) {
+        setEnforcedEnv(isDevDomain(host) ? "DEV" : "PROD");
+      }
+    }
+  }, []);
+
   const [tokenForm, setTokenForm] = useState({
     token: "",
     title: "",
@@ -53,6 +66,15 @@ export default function PushPage() {
     type: "guide_content" as PushType,
     id: ""
   });
+  
+  // Update forms if enforcedEnv is set
+  useEffect(() => {
+    if (enforcedEnv) {
+      setUserForm((prev) => ({ ...prev, environment: enforcedEnv }));
+      setBroadcastForm((prev) => ({ ...prev, environment: enforcedEnv }));
+    }
+  }, [enforcedEnv]);
+
   const [history, setHistory] = useState<PushHistoryItem[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -257,6 +279,7 @@ export default function PushPage() {
             value={userForm.environment}
             onChange={(v) => setUserForm({ ...userForm, environment: v as PushEnvironment })}
             options={ENV_OPTIONS.map((env) => ({ value: env, label: env }))}
+            disabled={!!enforcedEnv}
           />
           <Field label="Título" value={userForm.title} onChange={(v) => setUserForm({ ...userForm, title: v })} />
           <Field label="Mensagem" value={userForm.body} onChange={(v) => setUserForm({ ...userForm, body: v })} multiline />
@@ -300,6 +323,7 @@ export default function PushPage() {
               value={broadcastForm.environment}
               onChange={(v) => setBroadcastForm({ ...broadcastForm, environment: v as PushEnvironment })}
               options={ENV_OPTIONS.map((env) => ({ value: env, label: env }))}
+              disabled={!!enforcedEnv}
             />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -432,20 +456,23 @@ function SelectField({
   label,
   value,
   onChange,
-  options
+  options,
+  disabled
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: Array<{ value: string; label: string }>;
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex flex-col gap-2 text-sm text-white/80">
+    <label className={`flex flex-col gap-2 text-sm text-white/80 ${disabled ? "opacity-60" : ""}`}>
       <span className="text-xs uppercase tracking-wide text-white/50">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+        disabled={disabled}
+        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40 disabled:cursor-not-allowed"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value} className="text-black">

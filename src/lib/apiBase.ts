@@ -1,7 +1,12 @@
+export function isLocalHost(hostname?: string | null): boolean {
+  const host = (hostname ?? currentHostname())?.toLowerCase();
+  return host === "localhost" || host === "127.0.0.1";
+}
+
 function isDevHost(hostname?: string | null): boolean {
   if (!hostname) return false;
+  if (isLocalHost(hostname)) return true;
   const host = hostname.toLowerCase();
-  if (host === "localhost" || host === "127.0.0.1") return true;
   return host.startsWith("dev.") || host.includes(".dev");
 }
 
