@@ -1,11 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
 import Link from "next/link";
+import { api } from "@/lib/api";
+import type { ModerationStats } from "@/types/index";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { EmptyStateRow } from "@/components/dashboard/EmptyStateRow";
+import { ModerationTabs } from "@/components/dashboard/ModerationTabs";
+import { TableErrorRow, TableSkeletonRows } from "@/components/dashboard/TableSkeleton";
 
 type Contact = {
   id: number;
@@ -24,11 +27,19 @@ type PageResponse<T> = {
 export default function ModerationPage() {
   const [page, setPage] = useState(0);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["supportContacts", page],
     queryFn: () => api.get<PageResponse<Contact>>(`/dashboard/support/contacts?page=${page}&pageSize=20`),
     placeholderData: (prev) => prev
   });
+
+  const { data: moderationStats } = useQuery({
+    queryKey: ["moderation-stats"],
+    queryFn: () => api.get<ModerationStats>("/dashboard/moderation/stats")
+  });
+
+  const moderationBadge =
+    moderationStats && moderationStats.flaggedForReview > 0 ? String(moderationStats.flaggedForReview) : undefined;
 
   const items = data?.items ?? [];
 
@@ -38,20 +49,7 @@ export default function ModerationPage() {
         title="Moderação"
         subtitle="Fila de contatos e solicitações do público."
         actions={
-          <div className="flex items-center gap-3">
-            <Link
-              href="/moderation"
-              className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white"
-            >
-              Contatos
-            </Link>
-            <Link
-              href="/moderation/comments"
-              className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-textDark transition hover:scale-[1.01] hover:bg-black/5"
-            >
-              Comentários
-            </Link>
-          </div>
+          <ModerationTabs active="contacts" badge={moderationBadge} />
         }
       />
 
@@ -67,20 +65,8 @@ export default function ModerationPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td className="py-3 px-4" colSpan={5}>
-                  Carregando...
-                </td>
-              </tr>
-            )}
-            {error && (
-              <tr>
-                <td className="py-3 px-4 text-red-300" colSpan={5}>
-                  Erro ao carregar contatos
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows colSpan={5} columns={5} />}
+            {error && <TableErrorRow colSpan={5} message="Erro ao carregar contatos" onRetry={() => refetch()} />}
             {!isLoading && !error && items.length === 0 && (
               <EmptyStateRow colSpan={5} title="Nenhum contato encontrado" description="Ainda não há mensagens para revisar." />
             )}

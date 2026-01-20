@@ -91,3 +91,47 @@ export type PageResponse<T> = {
   pageSize?: number;
   hasNext: boolean;
 };
+
+export type ImageModerationStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "APPROVED"
+  | "FLAGGED_FOR_REVIEW"
+  | "BLOCKED"
+  | "MANUALLY_APPROVED"
+  | "MANUALLY_REJECTED"
+  | "FAILED";
+
+export type ImageModerationEntityType = "STORE_PHOTO" | "USER_AVATAR" | "GUIDE_CONTENT_IMAGE";
+
+export type ImageModeration = {
+  id: number;
+  imageUrl: string;
+  status: ImageModerationStatus;
+  entityType: ImageModerationEntityType;
+  entityId: string;
+  nsfwScore: number;
+  failureReason?: string;
+  createdAt: string;
+  processedAt?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  reviewNotes?: string;
+  retryCount: number;
+};
+
+export type ModerationStats = {
+  pending: number;
+  processing: number;
+  flaggedForReview: number;
+  blocked: number;
+  approved: number;
+  failed: number;
+  total: number;
+};
+
+export type ModerationPageResponse<T> = {
+  content: T[];
+  page: number;
+  hasNext: boolean;
+};

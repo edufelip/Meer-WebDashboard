@@ -3,10 +3,12 @@ import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import type { ContentComment, PageResponse } from "@/types/index";
+import type { ContentComment, ModerationStats, PageResponse } from "@/types/index";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { EmptyStateRow } from "@/components/dashboard/EmptyStateRow";
+import { ModerationTabs } from "@/components/dashboard/ModerationTabs";
+import { TableErrorRow, TableSkeletonRows } from "@/components/dashboard/TableSkeleton";
 
 const PAGE_SIZE = 20;
 
@@ -20,7 +22,7 @@ export default function ModerationCommentsPage() {
 
   const qc = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["moderation-comments", page, search, contentId, sort],
     queryFn: () =>
       api.get<PageResponse<ContentComment>>(
@@ -29,6 +31,14 @@ export default function ModerationCommentsPage() {
         }${contentId ? `&contentId=${encodeURIComponent(contentId)}` : ""}`
       )
   });
+
+  const { data: moderationStats } = useQuery({
+    queryKey: ["moderation-stats"],
+    queryFn: () => api.get<ModerationStats>("/dashboard/moderation/stats")
+  });
+
+  const moderationBadge =
+    moderationStats && moderationStats.flaggedForReview > 0 ? String(moderationStats.flaggedForReview) : undefined;
 
   const deleteMutation = useMutation({
     mutationFn: ({ commentId, targetContentId }: { commentId: string; targetContentId?: string }) => {
@@ -70,20 +80,7 @@ export default function ModerationCommentsPage() {
         title="Moderação de comentários"
         subtitle="Audite comentários recentes e remova conteúdos inadequados."
         actions={
-          <div className="flex items-center gap-3">
-            <Link
-              href="/moderation"
-              className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-textDark transition hover:scale-[1.01] hover:bg-black/5"
-            >
-              Contatos
-            </Link>
-            <Link
-              href="/moderation/comments"
-              className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white"
-            >
-              Comentários
-            </Link>
-          </div>
+          <ModerationTabs active="comments" badge={moderationBadge} />
         }
       />
 
@@ -148,20 +145,8 @@ export default function ModerationCommentsPage() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr>
-                <td className="py-3 px-4" colSpan={6}>
-                  Carregando...
-                </td>
-              </tr>
-            )}
-            {error && (
-              <tr>
-                <td className="py-3 px-4 text-red-300" colSpan={6}>
-                  Erro ao carregar comentários
-                </td>
-              </tr>
-            )}
+            {isLoading && <TableSkeletonRows colSpan={6} columns={6} />}
+            {error && <TableErrorRow colSpan={6} message="Erro ao carregar comentários" onRetry={() => refetch()} />}
             {!isLoading && !error && items.length === 0 && (
               <EmptyStateRow colSpan={6} title="Nenhum comentário encontrado" description="Ajuste os filtros para ver mais resultados." />
             )}

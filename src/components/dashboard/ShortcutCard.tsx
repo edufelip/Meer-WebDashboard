@@ -8,14 +8,20 @@ type ShortcutCardProps = {
   description: string;
   href: Route;
   icon: ComponentType<{ className?: string }>;
+  badge?: string;
 };
 
-export function ShortcutCard({ title, description, href, icon: Icon }: ShortcutCardProps) {
+export function ShortcutCard({ title, description, href, icon: Icon, badge }: ShortcutCardProps) {
   return (
     <Link
       href={href}
       className="group relative flex flex-col justify-between gap-2 rounded-2xl border border-[#833000] bg-[#833000] p-6 text-left text-white shadow-[0_20px_60px_-30px_rgba(0,0,0,0.6)] transition-all hover:-translate-y-0.5 hover:shadow-[0_25px_80px_-40px_rgba(0,0,0,0.45)]"
     >
+      {badge ? (
+        <span className="absolute right-4 top-4 rounded-full bg-brand-primary px-2.5 py-1 text-xs font-bold text-brand-forest">
+          {badge}
+        </span>
+      ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="rounded-2xl bg-white/15 p-3 text-white">
           <Icon className="h-6 w-6" />

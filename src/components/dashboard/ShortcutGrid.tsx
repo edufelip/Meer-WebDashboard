@@ -7,6 +7,7 @@ export type ShortcutItem = {
   description: string;
   href: Route;
   icon: ComponentType<{ className?: string }>;
+  badge?: string;
 };
 
 export function ShortcutGrid({ items }: { items: ShortcutItem[] }) {
