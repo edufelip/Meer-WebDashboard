@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { GuideContent, PageResponse } from "@/types/index";
 import Link from "next/link";
@@ -13,6 +13,9 @@ export default function ContentsPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const qc = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["contents", page, search, sort],
@@ -24,9 +27,46 @@ export default function ContentsPage() {
 
   const items = data?.items ?? [];
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => api.del(`/dashboard/contents/${id}`)));
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["contents"] });
+      setSelectedIds(new Set());
+    },
+    onError: () => alert("Ocorreu um erro ao excluir alguns conteúdos.")
+  });
+
   const submitSearch = () => {
     setPage(0);
     setSearch(searchInput);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === items.length && items.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((i) => i.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedIds(next);
+  };
+
+  const handleBulkDelete = () => {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    const confirmed = window.confirm(`Deseja excluir os ${count} conteúdos selecionados?`);
+    if (!confirmed) return;
+    bulkDeleteMutation.mutate(Array.from(selectedIds));
   };
 
   return (
@@ -36,12 +76,22 @@ export default function ContentsPage() {
         subtitle="Publicações enviadas pelos brechós."
         actions={
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/contents/new"
-              className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-textDark transition hover:scale-[1.01] hover:bg-black/5"
-            >
-              Novo conteúdo
-            </Link>
+            {selectedIds.size > 0 ? (
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleteMutation.isPending}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkDeleteMutation.isPending ? "Excluindo..." : `Excluir (${selectedIds.size})`}
+              </button>
+            ) : (
+              <Link
+                href="/contents/new"
+                className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-textDark transition hover:scale-[1.01] hover:bg-black/5"
+              >
+                Novo conteúdo
+              </Link>
+            )}
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -83,6 +133,14 @@ export default function ContentsPage() {
         <table className="w-full text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
+              <th className="py-3 px-4 w-10">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/20 bg-white/10 text-brand-primary focus:ring-brand-primary"
+                  checked={items.length > 0 && selectedIds.size === items.length}
+                  onChange={toggleSelectAll}
+                />
+              </th>
               <th className="py-3 px-4">ID</th>
               <th className="py-3 px-4">Título</th>
               <th className="py-3 px-4">Brechó</th>
@@ -94,23 +152,34 @@ export default function ContentsPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td className="py-3 px-4" colSpan={6}>
+                <td className="py-3 px-4" colSpan={7}>
                   Carregando...
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td className="py-3 px-4 text-red-300" colSpan={6}>
+                <td className="py-3 px-4 text-red-300" colSpan={7}>
                   Erro ao carregar conteúdos
                 </td>
               </tr>
             )}
             {!isLoading && !error && items.length === 0 && (
-              <EmptyStateRow colSpan={6} title="Nenhum conteúdo encontrado" description="Altere o filtro ou verifique se há posts novos." />
+              <EmptyStateRow colSpan={7} title="Nenhum conteúdo encontrado" description="Altere o filtro ou verifique se há posts novos." />
             )}
             {items.map((c) => (
-              <tr key={c.id} className="border-t border-white/5 hover:bg-white/5">
+              <tr 
+                key={c.id} 
+                className={`border-t border-white/5 transition-colors hover:bg-white/5 ${selectedIds.has(c.id) ? "bg-white/10" : ""}`}
+              >
+                <td className="py-3 px-4">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-white/20 bg-white/10 text-brand-primary focus:ring-brand-primary"
+                    checked={selectedIds.has(c.id)}
+                    onChange={() => toggleSelectOne(c.id)}
+                  />
+                </td>
                 <td className="py-3 px-4 text-xs text-white/60">{c.id}</td>
                 <td className="py-3 px-4 font-semibold">
                   <Link href={`/contents/${c.id}`} className="text-brand-primary hover:underline">
