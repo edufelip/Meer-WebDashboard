@@ -80,7 +80,7 @@ export default function ContentsPage() {
       />
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-textDark">
+        <table className="w-full text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
@@ -110,17 +110,17 @@ export default function ContentsPage() {
               <EmptyStateRow colSpan={6} title="Nenhum conteúdo encontrado" description="Altere o filtro ou verifique se há posts novos." />
             )}
             {items.map((c) => (
-              <tr key={c.id} className="border-t border-black/5 hover:bg-black/5">
-                <td className="py-3 px-4 text-xs text-white">{c.id}</td>
-                <td className="py-3 px-4 font-semibold text-textDark">
+              <tr key={c.id} className="border-t border-white/5 hover:bg-white/5">
+                <td className="py-3 px-4 text-xs text-white/60">{c.id}</td>
+                <td className="py-3 px-4 font-semibold">
                   <Link href={`/contents/${c.id}`} className="text-brand-primary hover:underline">
                     {c.title}
                   </Link>
                 </td>
-                <td className="py-3 px-4 text-white">{c.thriftStoreName ?? c.thriftStoreId}</td>
-                <td className="py-3 px-4 text-white">{c.likeCount ?? 0}</td>
-                <td className="py-3 px-4 text-white">{c.commentCount ?? 0}</td>
-                <td className="py-3 px-4 text-white">
+                <td className="py-3 px-4 text-white/90">{c.thriftStoreName ?? c.thriftStoreId}</td>
+                <td className="py-3 px-4 text-white/80">{c.likeCount ?? 0}</td>
+                <td className="py-3 px-4 text-white/80">{c.commentCount ?? 0}</td>
+                <td className="py-3 px-4 text-white/70">
                   {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "-"}
                 </td>
               </tr>
@@ -133,17 +133,17 @@ export default function ContentsPage() {
         <button
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Anterior
         </button>
-        <div>
+        <div className="font-medium text-textSubtle">
           Página {page + 1} {data?.hasNext ? "" : "(última)"}
         </div>
         <button
           disabled={!data?.hasNext}
           onClick={() => setPage((p) => p + 1)}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Próxima
         </button>

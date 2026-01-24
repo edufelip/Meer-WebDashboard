@@ -102,8 +102,8 @@ export default function StoreDetailPage() {
 
   const deleteMutation = useMutation({
     mutationFn: () => api.del(`/stores/${storeId}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stores"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["stores"] });
     }
   });
 
@@ -205,9 +205,10 @@ export default function StoreDetailPage() {
     const confirmed = window.confirm("Deseja realmente excluir este brechó?");
     if (confirmed) {
       deleteMutation.mutate(undefined, {
-        onSuccess: () => {
-          qc.invalidateQueries({ queryKey: ["stores"] });
+        onSuccess: async () => {
+          await qc.invalidateQueries({ queryKey: ["stores"] });
           router.replace("/stores");
+          router.refresh();
         },
         onError: () => {
           alert("Não foi possível excluir o brechó. Tente novamente.");

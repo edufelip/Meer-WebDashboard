@@ -78,9 +78,10 @@ export default function UserDetailPage() {
 
   const deleteMutation = useMutation({
     mutationFn: () => api.del(`/dashboard/users/${userId}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["users"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["users"] });
       router.replace("/users");
+      router.refresh();
     }
   });
 

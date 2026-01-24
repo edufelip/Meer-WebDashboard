@@ -80,7 +80,7 @@ export default function StoresPage() {
       />
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-textDark">
+        <table className="w-full text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
@@ -92,14 +92,14 @@ export default function StoresPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td className="py-3 px-4" colSpan={3}>
+                <td className="py-3 px-4" colSpan={4}>
                   Carregando...
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td className="py-3 px-4 text-red-300" colSpan={3}>
+                <td className="py-3 px-4 text-red-300" colSpan={4}>
                   Erro ao carregar brechós
                 </td>
               </tr>
@@ -108,15 +108,15 @@ export default function StoresPage() {
               <EmptyStateRow colSpan={4} title="Nenhum brechó encontrado" description="Tente ajustar o termo de busca." />
             )}
             {items.map((s) => (
-              <tr key={s.id} className="border-t border-black/5 hover:bg-black/5">
-                <td className="py-3 px-4 text-xs text-white">{s.id}</td>
-                <td className="py-3 px-4 font-semibold text-textDark">
+              <tr key={s.id} className="border-t border-white/5 hover:bg-white/5">
+                <td className="py-3 px-4 text-xs text-white/60">{s.id}</td>
+                <td className="py-3 px-4 font-semibold">
                   <Link href={`/stores/${s.id}`} className="text-brand-primary hover:underline">
                     {s.name}
                   </Link>
                 </td>
-                <td className="py-3 px-4 text-white">{s.addressLine ?? "-"}</td>
-                <td className="py-3 px-4 text-white">
+                <td className="py-3 px-4 text-white/90">{s.addressLine ?? "-"}</td>
+                <td className="py-3 px-4 text-white/70">
                   {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "-"}
                 </td>
               </tr>
@@ -129,17 +129,17 @@ export default function StoresPage() {
         <button
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Anterior
         </button>
-        <div>
+        <div className="font-medium text-textSubtle">
           Página {page + 1} {data?.hasNext ? "" : "(última)"}
         </div>
         <button
           disabled={!data?.hasNext}
           onClick={() => setPage((p) => p + 1)}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Próxima
         </button>

@@ -28,9 +28,10 @@ export default function ContactDetailPage() {
 
   const deleteMutation = useMutation({
     mutationFn: () => api.del(`/dashboard/support/contacts/${contactId}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["supportContacts"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["supportContacts"] });
       router.replace("/moderation");
+      router.refresh();
     }
   });
 

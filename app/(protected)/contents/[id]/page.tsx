@@ -88,9 +88,10 @@ export default function ContentDetailPage() {
 
   const deleteMutation = useMutation({
     mutationFn: () => api.del(`/dashboard/contents/${contentId}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["contents"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["contents"] });
       router.replace("/contents");
+      router.refresh();
     }
   });
 
