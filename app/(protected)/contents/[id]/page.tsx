@@ -146,17 +146,16 @@ export default function ContentDetailPage() {
 
     if (!title) return setErrorMsg("Título é obrigatório.");
     if (!description) return setErrorMsg("Descrição é obrigatória.");
-    if (!storeId) return setErrorMsg("Loja é obrigatória.");
+    // storeId is optional for admins (global posts)
 
     try {
       let targetId = contentId;
 
       if (isCreate) {
-        const created = await createContent({
-          title,
-          description,
-          storeId
-        });
+        const payload: any = { title, description };
+        if (storeId) payload.storeId = storeId;
+
+        const created = await createContent(payload);
         targetId = created.id;
         setStatus("Conteúdo criado.");
       }
@@ -249,7 +248,7 @@ export default function ContentDetailPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-lg font-semibold text-white">{isCreate ? "Criar conteúdo" : "Editar conteúdo"}</p>
-            <p className="text-sm text-white/70">Título, descrição e loja são obrigatórios.</p>
+            <p className="text-sm text-white/70">Título e descrição são obrigatórios.</p>
           </div>
           <button
             onClick={handleSave}
@@ -267,10 +266,10 @@ export default function ContentDetailPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <LabeledInput label="Título *" value={form.title} onChange={(v) => setForm({ ...form, title: v })} maxLength={160} />
             <LabeledInput
-              label="Loja (storeId) *"
+              label="Loja (storeId) - Opcional para Admin"
               value={form.storeId}
               onChange={(v) => setForm({ ...form, storeId: v })}
-              placeholder="UUID da loja"
+              placeholder="UUID da loja (deixe vazio para post global)"
               maxLength={64}
             />
           </div>
