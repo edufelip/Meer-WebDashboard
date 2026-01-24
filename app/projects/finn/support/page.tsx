@@ -87,13 +87,13 @@ export default function FinnSupport() {
           Last updated: January 24, 2026
         </p>
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm font-medium">
-          <Link href="/privacy_policy.html" className="hover:underline" style={{ color: colors.textSubtle }}>
+          <a href="/privacy_policy.html" className="hover:underline" style={{ color: colors.textSubtle }}>
             Privacy Policy
-          </Link>
+          </a>
           <span className="opacity-20 hidden sm:inline">|</span>
-          <Link href="/delete_request.html" className="hover:underline" style={{ color: colors.textSubtle }}>
+          <a href="/delete_request.html" className="hover:underline" style={{ color: colors.textSubtle }}>
             Data Deletion Request
-          </Link>
+          </a>
           <span className="opacity-20 hidden sm:inline">|</span>
           <Link href="/" className="hover:underline" style={{ color: colors.textSubtle }}>
             Go to Admin

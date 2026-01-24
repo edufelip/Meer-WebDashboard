@@ -130,7 +130,7 @@ export default function CategoriesPage() {
       </GlassCard>
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-white/90">
+        <table className="w-full text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
@@ -179,7 +179,7 @@ export default function CategoriesPage() {
                   </button>
                   <button
                     onClick={() => onDelete(cat.id)}
-                    className="rounded-lg border border-red-400/50 bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/30"
+                    className="rounded-lg bg-red-600/80 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
                   >
                     Apagar
                   </button>
@@ -194,17 +194,17 @@ export default function CategoriesPage() {
         <button
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Anterior
         </button>
-        <div>
+        <div className="font-medium text-textSubtle">
           Página {data ? data.page : page + 1} {data?.hasNext ? "" : "(última)"}
         </div>
         <button
           disabled={!data?.hasNext}
           onClick={() => setPage((p) => p + 1)}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Próxima
         </button>

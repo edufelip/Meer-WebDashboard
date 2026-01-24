@@ -55,7 +55,7 @@ export default function ContactDetailPage() {
           <button
             onClick={onDelete}
             disabled={deleteMutation.isPending}
-            className="rounded-xl border border-red-400/50 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
           >
             {deleteMutation.isPending ? "Apagando..." : "Apagar"}
           </button>

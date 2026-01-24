@@ -25,13 +25,13 @@ const statusLabels: Record<ImageModerationStatus, string> = {
 
 const statusTone: Record<ImageModerationStatus, string> = {
   PENDING: "bg-white/10 text-white",
-  PROCESSING: "bg-sky-500/20 text-sky-100",
-  APPROVED: "bg-emerald-500/20 text-emerald-100",
-  FLAGGED_FOR_REVIEW: "bg-amber-500/20 text-amber-100",
-  BLOCKED: "bg-red-500/20 text-red-100",
-  MANUALLY_APPROVED: "bg-emerald-500/20 text-emerald-100",
-  MANUALLY_REJECTED: "bg-red-500/20 text-red-100",
-  FAILED: "bg-red-500/20 text-red-100"
+  PROCESSING: "bg-sky-500/30 text-sky-100",
+  APPROVED: "bg-emerald-600/30 text-emerald-100",
+  FLAGGED_FOR_REVIEW: "bg-amber-600/30 text-amber-100",
+  BLOCKED: "bg-red-600/30 text-red-100",
+  MANUALLY_APPROVED: "bg-emerald-600/30 text-emerald-100",
+  MANUALLY_REJECTED: "bg-red-600/30 text-red-100",
+  FAILED: "bg-red-600/30 text-red-100"
 };
 
 const entityLabels = {
@@ -375,7 +375,7 @@ export default function ModerationImagesPage() {
                       type="button"
                       onClick={() => handleReview("MANUALLY_REJECTED")}
                       disabled={reviewMutation.isPending || selected.status !== "FLAGGED_FOR_REVIEW"}
-                      className="rounded-xl border border-red-400/60 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-40"
+                      className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-40"
                     >
                       Rejeitar
                     </button>

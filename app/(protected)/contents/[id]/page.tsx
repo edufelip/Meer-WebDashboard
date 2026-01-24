@@ -229,7 +229,7 @@ export default function ContentDetailPage() {
             <button
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="rounded-xl border border-red-400/50 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
             >
               {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
             </button>
@@ -346,7 +346,7 @@ export default function ContentDetailPage() {
             </div>
           </div>
 
-          <table className="w-full text-left text-sm text-textDark">
+          <table className="w-full text-left text-sm text-white">
             <thead>
               <tr className="text-xs uppercase tracking-wide text-white/60">
                 <th className="py-3 px-4">ID</th>
@@ -375,8 +375,8 @@ export default function ContentDetailPage() {
                 <EmptyStateRow colSpan={5} title="Nenhum comentário encontrado" description="Este conteúdo ainda não recebeu comentários." />
               )}
               {commentItems.map((comment) => (
-                <tr key={comment.id} className="border-t border-black/5 hover:bg-black/5">
-                  <td className="py-3 px-4 text-xs text-white">{comment.id}</td>
+                <tr key={comment.id} className="border-t border-white/10 hover:bg-white/5">
+                  <td className="py-3 px-4 text-xs text-white/80">{comment.id}</td>
                   <td className="py-3 px-4 text-white">
                     {comment.userDisplayName ?? comment.userId ?? "—"}
                   </td>
@@ -389,7 +389,7 @@ export default function ContentDetailPage() {
                       type="button"
                       onClick={() => handleDeleteComment(comment.id)}
                       disabled={deleteCommentMutation.isPending}
-                      className="rounded-xl border border-red-400/50 bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+                      className="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600 disabled:opacity-50"
                     >
                       Apagar
                     </button>
@@ -399,23 +399,24 @@ export default function ContentDetailPage() {
             </tbody>
           </table>
 
-          <div className="flex items-center justify-between text-sm text-textDark">
+          <div className="flex items-center justify-between text-sm">
             <button
               disabled={commentsPage === 0}
               onClick={() => setCommentsPage((p) => Math.max(0, p - 1))}
-              className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10 disabled:opacity-40"
             >
               Anterior
             </button>
             <button
               disabled={!commentsData?.hasNext}
               onClick={() => setCommentsPage((p) => p + 1)}
-              className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10 disabled:opacity-40"
             >
               Próxima
             </button>
           </div>
         </GlassCard>
+
       ) : null}
     </div>
   );

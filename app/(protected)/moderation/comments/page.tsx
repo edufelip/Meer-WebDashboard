@@ -133,7 +133,7 @@ export default function ModerationCommentsPage() {
       </div>
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-textDark">
+        <table className="w-full text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
@@ -151,23 +151,23 @@ export default function ModerationCommentsPage() {
               <EmptyStateRow colSpan={6} title="Nenhum comentário encontrado" description="Ajuste os filtros para ver mais resultados." />
             )}
             {items.map((comment) => (
-              <tr key={comment.id} className="border-t border-black/5 hover:bg-black/5">
-                <td className="py-3 px-4 text-xs text-white">{comment.id}</td>
+              <tr key={comment.id} className="border-t border-white/5 hover:bg-white/5">
+                <td className="py-3 px-4 text-xs text-white/60">{comment.id}</td>
                 <td className="py-3 px-4 text-white">
                   {comment.contentId ? (
-                    <Link href={`/contents/${comment.contentId}`} className="text-brand-primary hover:underline">
+                    <Link href={`/contents/${comment.contentId}`} className="text-brand-primary font-medium hover:underline">
                       {comment.contentTitle ?? comment.contentId}
                     </Link>
                   ) : (
                     comment.contentTitle ?? "—"
                   )}
                   {comment.thriftStoreName ? (
-                    <div className="text-xs text-white/60">{comment.thriftStoreName}</div>
+                    <div className="text-xs text-white/50">{comment.thriftStoreName}</div>
                   ) : null}
                 </td>
                 <td className="py-3 px-4 text-white">{comment.userDisplayName ?? comment.userId ?? "—"}</td>
                 <td className="py-3 px-4 text-white">{comment.body}</td>
-                <td className="py-3 px-4 text-white">
+                <td className="py-3 px-4 text-white/70">
                   {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : "-"}
                 </td>
                 <td className="py-3 px-4">
@@ -175,7 +175,7 @@ export default function ModerationCommentsPage() {
                     type="button"
                     onClick={() => handleDelete(comment)}
                     disabled={deleteMutation.isPending}
-                    className="rounded-xl border border-red-400/50 bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+                    className="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600 disabled:opacity-50"
                   >
                     Apagar
                   </button>
@@ -190,17 +190,17 @@ export default function ModerationCommentsPage() {
         <button
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Anterior
         </button>
-        <div>
+        <div className="font-medium text-textSubtle">
           Página {page + 1} {data?.hasNext ? "" : "(última)"}
         </div>
         <button
           disabled={!data?.hasNext}
           onClick={() => setPage((p) => p + 1)}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
         >
           Próxima
         </button>
