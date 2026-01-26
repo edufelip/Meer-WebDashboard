@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import clsx from "classnames";
 import { api } from "@/lib/api";
 import { toStorageObjectUrl } from "@/lib/storage";
 import type { ContentComment, GuideContent, PageResponse } from "@/types/index";

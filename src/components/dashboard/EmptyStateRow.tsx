@@ -1,6 +1,4 @@
 import type { ReactNode } from "react";
-import clsx from "classnames";
-
 export function EmptyStateRow({
   colSpan,
   title,

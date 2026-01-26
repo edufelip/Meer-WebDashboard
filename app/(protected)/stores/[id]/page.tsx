@@ -17,6 +17,7 @@ type StoreFormState = {
   openingHours: string;
   addressLine: string;
   neighborhood: string;
+  isOnlineStore: boolean;
   phone: string;
   whatsapp: string;
   email: string;
@@ -51,6 +52,7 @@ const emptyFormState: StoreFormState = {
   openingHours: "",
   addressLine: "",
   neighborhood: "",
+  isOnlineStore: false,
   phone: "",
   whatsapp: "",
   email: "",
@@ -79,7 +81,7 @@ export default function StoreDetailPage() {
   const qc = useQueryClient();
 
   const [form, setForm] = useState<StoreFormState | null>(isCreate ? emptyFormState : null);
-  const [showEdit, setShowEdit] = useState(true);
+  const [showEdit] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [addressQuery, setAddressQuery] = useState("");
@@ -137,6 +139,7 @@ export default function StoreDetailPage() {
       openingHours: data.openingHours ?? "",
       addressLine: data.addressLine ?? "",
       neighborhood: data.neighborhood ?? "",
+      isOnlineStore: Boolean(data.isOnlineStore),
       phone: data.phone ?? "",
       whatsapp: data.whatsapp ?? "",
       email: data.email ?? "",
@@ -264,7 +267,7 @@ export default function StoreDetailPage() {
       changes++;
     }
 
-    const applyField = (key: keyof StoreFormState, currentVal: any) => {
+    const applyField = (key: Exclude<keyof StoreFormState, "isOnlineStore">, currentVal: any) => {
       const next = nullable(form[key]);
       if (safeCompare(next) !== safeCompare(currentVal)) {
         payload[key] = next;
@@ -280,6 +283,11 @@ export default function StoreDetailPage() {
     applyField("description", current?.description);
     applyField("openingHours", current?.openingHours);
     applyField("neighborhood", current?.neighborhood);
+    const nextOnline = Boolean(form.isOnlineStore);
+    if (nextOnline !== Boolean(current?.isOnlineStore)) {
+      payload.isOnlineStore = nextOnline;
+      changes++;
+    }
     if (isCreate && form.phone.trim() === "") {
       setFormError("O telefone é obrigatório.");
       return;
@@ -560,6 +568,21 @@ export default function StoreDetailPage() {
                     setAddressQuery("");
                   }}
                 />
+              </div>
+              <div>
+                <label className="flex items-center gap-2 text-sm text-white/90">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-white/20 bg-white/10 text-brand-primary focus:ring-brand-primary"
+                    checked={form.isOnlineStore}
+                    onChange={(event) => setForm({ ...form, isOnlineStore: event.target.checked })}
+                  />
+                  Loja online
+                </label>
+                <p className="mt-2 text-xs text-white/60">
+                  Mesmo sendo loja online, é necessário informar um endereço. Para lojas online, exibimos apenas a cidade
+                  e o bairro para os usuários.
+                </p>
               </div>
               <LabeledInput label="Bairro" value={form.neighborhood} readOnly disabled maxLength={120} />
               <LabeledInput label="Telefone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} maxLength={32} />

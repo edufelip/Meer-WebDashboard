@@ -5,6 +5,7 @@ export type ThriftStore = {
   description?: string;
   tagline?: string;
   coverImageUrl?: string;
+  isOnlineStore?: boolean;
   images?: Array<{
     id: string | number;
     url: string;

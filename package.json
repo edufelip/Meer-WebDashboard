@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest --config jest.config.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.50.0",

@@ -4,7 +4,7 @@ import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import type { ComponentType } from "react";
 import { clearToken } from "@/lib/auth";
-import { ArrowRightIcon, BellIcon, CategoryIcon, CheckIcon, ContentIcon, DashboardIcon, HammerIcon, SettingsIcon, StoreIcon, UsersIcon } from "./icons";
+import { ArrowRightIcon, CheckIcon, DashboardIcon, SettingsIcon, StoreIcon, UsersIcon } from "./icons";
 
 type IconComponent = ComponentType<{ className?: string }>;
 type SidebarIconKey = "dashboard" | "users" | "stores" | "approvals" | "settings";
