@@ -235,7 +235,6 @@ export default function StoreDetailPage() {
     setFormMessage(null);
     setPhotoError(null);
     setPhotoStatus(null);
-    setSavingAll(true);
 
     const payload: Record<string, any> = {};
     let changes = 0;
@@ -355,11 +354,11 @@ export default function StoreDetailPage() {
 
     if (!photosDirty && changes === 0) {
       setFormMessage("Nada para salvar — nenhuma alteração detectada.");
-      setSavingAll(false);
       return;
     }
 
     try {
+      setSavingAll(true);
       let targetStoreId = storeId;
 
       if (isCreate) {
@@ -585,7 +584,12 @@ export default function StoreDetailPage() {
                 </p>
               </div>
               <LabeledInput label="Bairro" value={form.neighborhood} readOnly disabled maxLength={120} />
-              <LabeledInput label="Telefone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} maxLength={32} />
+              <LabeledInput
+                label="Telefone *"
+                value={form.phone}
+                onChange={(v) => setForm({ ...form, phone: v })}
+                maxLength={32}
+              />
               <LabeledInput
                 label="Whatsapp"
                 value={form.whatsapp}
