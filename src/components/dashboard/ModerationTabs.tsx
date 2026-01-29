@@ -8,8 +8,9 @@ type ModerationTabsProps = {
 
 export function ModerationTabs({ active, badge }: ModerationTabsProps) {
   const baseClass =
-    "rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-textDark transition hover:scale-[1.01] hover:bg-black/5";
-  const activeClass = "rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white";
+    "rounded-full border border-black/10 bg-white/80 px-4 py-2 text-sm font-semibold text-textDark shadow-sm transition-colors transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white";
+  const activeClass =
+    "rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-colors transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white";
 
   return (
     <div className="flex items-center gap-3">

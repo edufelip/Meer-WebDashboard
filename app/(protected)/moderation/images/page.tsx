@@ -128,7 +128,7 @@ export default function ModerationImagesPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-textDark">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader
         title="Moderação de imagens"
         subtitle="Revise fotos sinalizadas pelo sistema de IA."
@@ -141,8 +141,8 @@ export default function ModerationImagesPage() {
         {statsQuery.isLoading
           ? Array.from({ length: 6 }).map((_, index) => (
               <GlassCard key={index} className="flex flex-col gap-3">
-                <div className="h-3 w-20 animate-pulse rounded-full bg-white/20" />
-                <div className="h-7 w-12 animate-pulse rounded-full bg-white/20" />
+                <div className="h-3 w-20 rounded-full bg-white/20 motion-safe:animate-pulse" />
+                <div className="h-7 w-12 rounded-full bg-white/20 motion-safe:animate-pulse" />
               </GlassCard>
             ))
           : null}
@@ -172,10 +172,10 @@ export default function ModerationImagesPage() {
         <button
           type="button"
           onClick={() => setActiveTab("flagged")}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+          className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition-colors transition-transform duration-200 hover:-translate-y-0.5 ${
             activeTab === "flagged"
               ? "bg-brand-primary text-brand-forest"
-              : "border border-black/10 bg-white text-textDark hover:bg-black/5"
+              : "border border-black/10 bg-white/80 text-textDark hover:bg-white"
           }`}
         >
           Caixa de entrada
@@ -183,10 +183,10 @@ export default function ModerationImagesPage() {
         <button
           type="button"
           onClick={() => setActiveTab("history")}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+          className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition-colors transition-transform duration-200 hover:-translate-y-0.5 ${
             activeTab === "history"
               ? "bg-brand-primary text-brand-forest"
-              : "border border-black/10 bg-white text-textDark hover:bg-black/5"
+              : "border border-black/10 bg-white/80 text-textDark hover:bg-white"
           }`}
         >
           Histórico
@@ -198,7 +198,9 @@ export default function ModerationImagesPage() {
               setHistoryPage(0);
               setStatusFilter(e.target.value as ImageModerationStatus | "ALL");
             }}
-            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-textDark focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+            name="moderation-status"
+            aria-label="Filtrar por status"
+            className="rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm text-textDark shadow-sm focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
           >
             <option className="text-black" value="ALL">
               Todos os status
@@ -213,62 +215,71 @@ export default function ModerationImagesPage() {
       </div>
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-textDark">
-          <thead>
-            <tr className="text-xs uppercase tracking-wide text-white/60">
-              <th className="py-3 px-4">Imagem</th>
-              <th className="py-3 px-4">Tipo</th>
-              <th className="py-3 px-4">Score</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Criado em</th>
-              <th className="py-3 px-4">Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activeQuery.isLoading && <TableSkeletonRows colSpan={6} columns={6} columnSpans={[2, 1, 1, 1, 1]} />}
-            {activeQuery.error && (
-              <TableErrorRow colSpan={6} message="Erro ao carregar imagens" onRetry={() => activeQuery.refetch()} />
-            )}
-            {activeTab === "flagged" && !flaggedQuery.isLoading && !flaggedQuery.error && flaggedItems.length === 0 && (
-              <EmptyStateRow colSpan={6} title="Nenhuma imagem sinalizada" description="Tudo certo por aqui." />
-            )}
-            {activeTab === "history" && !historyQuery.isLoading && !historyQuery.error && historyItems.length === 0 && (
-              <EmptyStateRow colSpan={6} title="Nenhum item no histórico" description="Tente ajustar os filtros." />
-            )}
-            {(activeTab === "flagged" ? flaggedItems : historyItems).map((item) => (
-              <tr key={item.id} className="border-t border-black/5 hover:bg-black/5">
-                <td className="py-3 px-4">
-                  <button
-                    type="button"
-                    onClick={() => setSelected(item)}
-                    className="flex items-center gap-3 text-left"
-                  >
-                    <img src={item.imageUrl} alt="Imagem moderada" className="h-10 w-10 rounded-lg object-cover" />
-                    <div>
-                      <div className="text-xs text-white/70">#{item.id}</div>
-                      <div className="text-sm text-white">{item.entityId}</div>
-                    </div>
-                  </button>
-                </td>
-                <td className="py-3 px-4 text-white">{entityLabels[item.entityType] ?? item.entityType}</td>
-                <td className="py-3 px-4 text-white">{Math.round(item.nsfwScore * 100)}%</td>
-                <td className="py-3 px-4">
-                  <Pill className={`${statusTone[item.status]} border border-white/10`}>{statusLabels[item.status]}</Pill>
-                </td>
-                <td className="py-3 px-4 text-white">{formatDate(item.createdAt)}</td>
-                <td className="py-3 px-4">
-                  <button
-                    type="button"
-                    onClick={() => setSelected(item)}
-                    className="rounded-xl border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-textDark hover:bg-black/5"
-                  >
-                    {activeTab === "flagged" ? "Revisar" : "Detalhes"}
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[820px] text-left text-sm text-white">
+            <thead>
+              <tr className="text-xs uppercase tracking-wide text-white/60">
+                <th className="py-3 px-4">Imagem</th>
+                <th className="py-3 px-4">Tipo</th>
+                <th className="py-3 px-4">Score</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Criado em</th>
+                <th className="py-3 px-4">Ação</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {activeQuery.isLoading && <TableSkeletonRows colSpan={6} columns={6} columnSpans={[2, 1, 1, 1, 1]} />}
+              {activeQuery.error && (
+                <TableErrorRow colSpan={6} message="Erro ao carregar imagens" onRetry={() => activeQuery.refetch()} />
+              )}
+              {activeTab === "flagged" && !flaggedQuery.isLoading && !flaggedQuery.error && flaggedItems.length === 0 && (
+                <EmptyStateRow colSpan={6} title="Nenhuma imagem sinalizada" description="Tudo certo por aqui." />
+              )}
+              {activeTab === "history" && !historyQuery.isLoading && !historyQuery.error && historyItems.length === 0 && (
+                <EmptyStateRow colSpan={6} title="Nenhum item no histórico" description="Tente ajustar os filtros." />
+              )}
+              {(activeTab === "flagged" ? flaggedItems : historyItems).map((item) => (
+                <tr key={item.id} className="border-t border-white/10 hover:bg-white/5">
+                  <td className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => setSelected(item)}
+                      className="flex items-center gap-3 text-left"
+                    >
+                      <img
+                        src={item.imageUrl}
+                        alt="Imagem moderada"
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                        className="h-10 w-10 rounded-lg object-cover"
+                      />
+                      <div>
+                        <div className="text-xs text-white/70">#{item.id}</div>
+                        <div className="text-sm text-white">{item.entityId}</div>
+                      </div>
+                    </button>
+                  </td>
+                  <td className="py-3 px-4 text-white">{entityLabels[item.entityType] ?? item.entityType}</td>
+                  <td className="py-3 px-4 text-white">{Math.round(item.nsfwScore * 100)}%</td>
+                  <td className="py-3 px-4">
+                    <Pill className={`${statusTone[item.status]} border border-white/10`}>{statusLabels[item.status]}</Pill>
+                  </td>
+                  <td className="py-3 px-4 text-white">{formatDate(item.createdAt)}</td>
+                  <td className="py-3 px-4">
+                    <button
+                      type="button"
+                      onClick={() => setSelected(item)}
+                      className="rounded-2xl border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                    >
+                      {activeTab === "flagged" ? "Revisar" : "Detalhes"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </GlassCard>
 
       {activeTab === "flagged" ? (
@@ -276,7 +287,7 @@ export default function ModerationImagesPage() {
           <button
             disabled={flaggedPage === 0}
             onClick={() => setFlaggedPage((p) => Math.max(0, p - 1))}
-            className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+            className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 shadow-sm transition-colors hover:bg-white disabled:opacity-40"
           >
             Anterior
           </button>
@@ -286,7 +297,7 @@ export default function ModerationImagesPage() {
           <button
             disabled={!flaggedQuery.data?.hasNext}
             onClick={() => setFlaggedPage((p) => p + 1)}
-            className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+            className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 shadow-sm transition-colors hover:bg-white disabled:opacity-40"
           >
             Próxima
           </button>
@@ -296,7 +307,7 @@ export default function ModerationImagesPage() {
           <button
             disabled={historyPage === 0}
             onClick={() => setHistoryPage((p) => Math.max(0, p - 1))}
-            className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+            className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 shadow-sm transition-colors hover:bg-white disabled:opacity-40"
           >
             Anterior
           </button>
@@ -306,7 +317,7 @@ export default function ModerationImagesPage() {
           <button
             disabled={!historyQuery.data?.hasNext}
             onClick={() => setHistoryPage((p) => p + 1)}
-            className="rounded-xl border border-black/10 bg-white px-4 py-2 disabled:opacity-40"
+            className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 shadow-sm transition-colors hover:bg-white disabled:opacity-40"
           >
             Próxima
           </button>
@@ -315,7 +326,12 @@ export default function ModerationImagesPage() {
 
       {selected ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={closeModal} />
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60"
+            aria-label="Fechar modal"
+            onClick={closeModal}
+          />
           <div className="relative w-full max-w-4xl">
             <GlassCard className="space-y-4">
               <div className="flex items-center justify-between">
@@ -326,7 +342,7 @@ export default function ModerationImagesPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 hover:bg-white/10"
+                  className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-white/80 transition-colors hover:bg-white/20"
                 >
                   Fechar
                 </button>
@@ -334,9 +350,16 @@ export default function ModerationImagesPage() {
 
               <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
                 <div className="space-y-3">
-                  <img src={selected.imageUrl} alt="Imagem para revisão" className="w-full rounded-2xl object-cover" />
+                  <img
+                    src={selected.imageUrl}
+                    alt="Imagem para revisão"
+                    width={1200}
+                    height={900}
+                    loading="lazy"
+                    className="w-full rounded-2xl object-cover"
+                  />
                   {selected.failureReason ? (
-                    <div className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    <div className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
                       Falha: {selected.failureReason}
                     </div>
                   ) : null}
@@ -358,8 +381,10 @@ export default function ModerationImagesPage() {
                       value={reviewNotes}
                       onChange={(e) => setReviewNotes(e.target.value)}
                       rows={3}
-                      placeholder="Opcional"
-                      className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+                      name="review-notes"
+                      autoComplete="off"
+                      placeholder="Opcional…"
+                      className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
                     />
                   </div>
                   <div className="flex flex-wrap gap-3">
@@ -367,7 +392,7 @@ export default function ModerationImagesPage() {
                       type="button"
                       onClick={() => handleReview("MANUALLY_APPROVED")}
                       disabled={reviewMutation.isPending || selected.status !== "FLAGGED_FOR_REVIEW"}
-                      className="rounded-xl bg-emerald-400/90 px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-300 disabled:opacity-40"
+                      className="rounded-2xl bg-emerald-400/90 px-4 py-2 text-sm font-semibold text-emerald-900 shadow-sm transition-colors hover:bg-emerald-300 disabled:opacity-40"
                     >
                       Aprovar
                     </button>
@@ -375,7 +400,7 @@ export default function ModerationImagesPage() {
                       type="button"
                       onClick={() => handleReview("MANUALLY_REJECTED")}
                       disabled={reviewMutation.isPending || selected.status !== "FLAGGED_FOR_REVIEW"}
-                      className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-40"
+                      className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-40"
                     >
                       Rejeitar
                     </button>

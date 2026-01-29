@@ -3,16 +3,118 @@
 @tailwind utilities;
 
 :root {
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: light;
 }
 
 body {
-  background: #f7f2eb;
+  background:
+    radial-gradient(1200px circle at 12% -12%, rgba(229, 170, 0, 0.2), transparent 55%),
+    radial-gradient(900px circle at 88% 6%, rgba(177, 67, 0, 0.16), transparent 60%),
+    linear-gradient(180deg, #f7f2eb 0%, #f3e6d6 100%);
   color: #833000;
-  font-family: var(--font-body);
+  font-family: var(--font-body), sans-serif;
+  min-height: 100%;
+  text-rendering: optimizeLegibility;
 }
 
 .font-display {
-  font-family: var(--font-display);
+  font-family: var(--font-display), serif;
+}
+
+::selection {
+  background: rgba(229, 170, 0, 0.35);
+  color: #833000;
+}
+
+* {
+  -webkit-tap-highlight-color: rgba(229, 170, 0, 0.18);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(229, 170, 0, 0.75);
+  outline-offset: 3px;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 6rem;
+}
+
+@supports (text-wrap: balance) {
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+table {
+  font-variant-numeric: tabular-nums;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 50;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  background: #fff7ee;
+  color: #833000;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px -20px rgba(131, 48, 0, 0.6);
+  transform: translateY(-200%);
+  transition: transform 200ms ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floaty {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-float {
+  animation: floaty 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-float {
+    animation: none;
+  }
 }

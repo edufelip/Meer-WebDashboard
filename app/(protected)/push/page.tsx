@@ -233,11 +233,19 @@ export default function PushPage() {
     broadcastForm.id.trim().length > 0;
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-textDark">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader title="Notificações" subtitle="Envie pushes para QA e produção. Todos os envios exigem type + id para roteamento." />
 
-      {statusMessage ? <Pill className="bg-emerald-100 text-emerald-700">{statusMessage}</Pill> : null}
-      {errorMessage ? <Pill className="bg-red-100 text-red-700">{errorMessage}</Pill> : null}
+      {statusMessage ? (
+        <div role="status" aria-live="polite">
+          <Pill className="bg-emerald-100 text-emerald-700">{statusMessage}</Pill>
+        </div>
+      ) : null}
+      {errorMessage ? (
+        <div role="status" aria-live="polite">
+          <Pill className="bg-red-100 text-red-700">{errorMessage}</Pill>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <GlassCard className="space-y-4">
@@ -262,9 +270,9 @@ export default function PushPage() {
             type="button"
             onClick={() => sendTokenMutation.mutate()}
             disabled={!canSendToken || sendTokenMutation.isPending}
-            className="w-full rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+            className="w-full rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white disabled:opacity-60"
           >
-            {sendTokenMutation.isPending ? "Enviando..." : "Enviar push"}
+            {sendTokenMutation.isPending ? "Enviando…" : "Enviar push"}
           </button>
         </GlassCard>
 
@@ -297,9 +305,9 @@ export default function PushPage() {
             type="button"
             onClick={() => sendUserMutation.mutate()}
             disabled={!canSendUser || sendUserMutation.isPending}
-            className="w-full rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+            className="w-full rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white disabled:opacity-60"
           >
-            {sendUserMutation.isPending ? "Enviando..." : "Enviar push"}
+            {sendUserMutation.isPending ? "Enviando…" : "Enviar push"}
           </button>
         </GlassCard>
 
@@ -359,9 +367,9 @@ export default function PushPage() {
             type="button"
             onClick={() => sendBroadcastMutation.mutate()}
             disabled={!canSendBroadcast || sendBroadcastMutation.isPending}
-            className="w-full rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+            className="w-full rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white disabled:opacity-60"
           >
-            {sendBroadcastMutation.isPending ? "Enviando..." : "Enviar broadcast"}
+            {sendBroadcastMutation.isPending ? "Enviando…" : "Enviar broadcast"}
           </button>
         </GlassCard>
       </div>
@@ -374,46 +382,48 @@ export default function PushPage() {
         {history.length === 0 ? (
           <p className="text-sm text-white/70">Nenhum push enviado ainda.</p>
         ) : (
-          <table className="w-full text-left text-sm text-textDark">
-            <thead>
-              <tr className="text-xs uppercase tracking-wide text-white/60">
-                <th className="py-3 px-4">Horário</th>
-                <th className="py-3 px-4">Modo</th>
-                <th className="py-3 px-4">Destino</th>
-                <th className="py-3 px-4">Conteúdo</th>
-                <th className="py-3 px-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((item) => (
-                <tr key={item.id} className="border-t border-black/5 hover:bg-black/5">
-                  <td className="py-3 px-4 text-white">{new Date(item.createdAt).toLocaleString()}</td>
-                  <td className="py-3 px-4 text-white">{item.mode}</td>
-                  <td className="py-3 px-4 text-white">
-                    {item.target}
-                    {item.environment ? <div className="text-xs text-white/60">{item.environment}</div> : null}
-                    {item.audience ? <div className="text-xs text-white/60">{item.audience}</div> : null}
-                  </td>
-                  <td className="py-3 px-4 text-white">
-                    <div className="font-semibold">{item.title}</div>
-                    <div className="text-xs text-white/60">{item.type}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={
-                        item.status === "success"
-                          ? "rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700"
-                          : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
-                      }
-                    >
-                      {item.status === "success" ? "Sucesso" : "Erro"}
-                    </span>
-                    {item.error ? <div className="text-xs text-red-600 mt-1">{item.error}</div> : null}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm text-white">
+              <thead>
+                <tr className="text-xs uppercase tracking-wide text-white/60">
+                  <th className="py-3 px-4">Horário</th>
+                  <th className="py-3 px-4">Modo</th>
+                  <th className="py-3 px-4">Destino</th>
+                  <th className="py-3 px-4">Conteúdo</th>
+                  <th className="py-3 px-4">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {history.map((item) => (
+                  <tr key={item.id} className="border-t border-white/10 hover:bg-white/5">
+                    <td className="py-3 px-4 text-white">{new Date(item.createdAt).toLocaleString()}</td>
+                    <td className="py-3 px-4 text-white">{item.mode}</td>
+                    <td className="py-3 px-4 text-white">
+                      {item.target}
+                      {item.environment ? <div className="text-xs text-white/60">{item.environment}</div> : null}
+                      {item.audience ? <div className="text-xs text-white/60">{item.audience}</div> : null}
+                    </td>
+                    <td className="py-3 px-4 text-white">
+                      <div className="font-semibold">{item.title}</div>
+                      <div className="text-xs text-white/60">{item.type}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={
+                          item.status === "success"
+                            ? "rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700"
+                            : "rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700"
+                        }
+                      >
+                        {item.status === "success" ? "Sucesso" : "Erro"}
+                      </span>
+                      {item.error ? <div className="mt-1 text-xs text-red-200">{item.error}</div> : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </GlassCard>
     </div>
@@ -431,6 +441,7 @@ function Field({
   onChange: (value: string) => void;
   multiline?: boolean;
 }) {
+  const fieldName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
   return (
     <label className="flex flex-col gap-2 text-sm text-white/80">
       <span className="text-xs uppercase tracking-wide text-white/50">{label}</span>
@@ -439,13 +450,18 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
-          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+          name={fieldName}
+          autoComplete="off"
+          className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/50 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
         />
       ) : (
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+          name={fieldName}
+          autoComplete="off"
+          spellCheck={false}
+          className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/50 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
         />
       )}
     </label>
@@ -465,6 +481,7 @@ function SelectField({
   options: Array<{ value: string; label: string }>;
   disabled?: boolean;
 }) {
+  const fieldName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
   return (
     <label className={`flex flex-col gap-2 text-sm text-white/80 ${disabled ? "opacity-60" : ""}`}>
       <span className="text-xs uppercase tracking-wide text-white/50">{label}</span>
@@ -472,7 +489,8 @@ function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40 disabled:cursor-not-allowed"
+        name={fieldName}
+        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 disabled:cursor-not-allowed"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value} className="text-black">

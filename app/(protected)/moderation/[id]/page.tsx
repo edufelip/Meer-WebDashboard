@@ -44,11 +44,11 @@ export default function ContactDetailPage() {
     }
   };
 
-  if (isLoading) return <div className="p-4">Carregando...</div>;
+  if (isLoading) return <div className="p-4">Carregando…</div>;
   if (error || !data) return <div className="p-4 text-red-600">Erro ao carregar contato.</div>;
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-white">
+    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader
         title={`Contato #${data.id}`}
         subtitle={data.createdAt ? new Date(data.createdAt).toLocaleString() : "-"}
@@ -56,9 +56,9 @@ export default function ContactDetailPage() {
           <button
             onClick={onDelete}
             disabled={deleteMutation.isPending}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+            className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
           >
-            {deleteMutation.isPending ? "Apagando..." : "Apagar"}
+            {deleteMutation.isPending ? "Apagando…" : "Apagar"}
           </button>
         }
       />

@@ -138,9 +138,9 @@ export default function UserDetailPage() {
       let avatarUrl = form.avatarUrl.trim() || undefined;
       if (avatarFile) {
         const contentType = avatarFile.type || "image/jpeg";
-        setAvatarStatus("Solicitando upload...");
+        setAvatarStatus("Solicitando upload…");
         const slot = await api.post<AvatarSlot>("/profile/avatar/upload", { contentType });
-        setAvatarStatus("Enviando avatar...");
+        setAvatarStatus("Enviando avatar…");
         const putRes = await fetch(slot.uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": slot.contentType },
@@ -198,11 +198,11 @@ export default function UserDetailPage() {
     return null;
   }, [avatarFile, form.avatarUrl]);
 
-  if (!isCreate && isLoading) return <div className="p-4">Carregando...</div>;
+  if (!isCreate && isLoading) return <div className="p-4">Carregando…</div>;
   if (!isCreate && (error || !data)) return <div className="p-4 text-red-600">Erro ao carregar usuário.</div>;
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-white">
+    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader
         title={isCreate ? "Novo usuário" : data?.name ?? "Usuário"}
         subtitle={isCreate ? "Cadastre um novo usuário" : data?.email}
@@ -211,9 +211,9 @@ export default function UserDetailPage() {
             <button
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+              className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
             >
-              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+              {deleteMutation.isPending ? "Excluindo…" : "Excluir"}
             </button>
           ) : null
         }
@@ -231,9 +231,9 @@ export default function UserDetailPage() {
             <button
               onClick={handleSave}
               disabled={creating || saving}
-              className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+              className="rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white disabled:opacity-60"
             >
-              {creating || saving ? "Salvando..." : "Salvar alterações"}
+              {creating || saving ? "Salvando…" : "Salvar alterações"}
             </button>
           </div>
 
@@ -270,11 +270,12 @@ export default function UserDetailPage() {
 
             <div className="space-y-2">
               <span className="text-white/70 text-sm mb-1 block">Avatar</span>
-              <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:bg-white/10">
+              <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10">
                 Enviar arquivo
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
+                  name="user-avatar"
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
@@ -319,6 +320,8 @@ function LabeledInput({
   disabled?: boolean;
   maxLength?: number;
 }) {
+  const inputName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
+  const resolvedSpellCheck = type === "email" || type === "password" ? false : undefined;
   return (
     <label className="flex flex-col gap-1 text-sm">
       {label ? <span className="text-white/70">{label}</span> : null}
@@ -329,9 +332,12 @@ function LabeledInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
+        name={inputName}
+        autoComplete="off"
+        spellCheck={resolvedSpellCheck}
         className={clsx(
-          "rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40",
-          disabled ? "cursor-not-allowed opacity-70 focus:ring-0" : ""
+          "rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40",
+          disabled ? "cursor-not-allowed opacity-70 focus-visible:ring-0" : ""
         )}
       />
     </label>
@@ -351,6 +357,7 @@ function LabeledTextArea({
   rows?: number;
   maxLength?: number;
 }) {
+  const inputName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="text-white/70">{label}</span>
@@ -359,7 +366,9 @@ function LabeledTextArea({
         rows={rows}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+        name={inputName}
+        autoComplete="off"
+        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
       />
     </label>
   );

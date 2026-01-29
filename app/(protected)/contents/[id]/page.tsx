@@ -162,11 +162,11 @@ export default function ContentDetailPage() {
 
       let imageUrl = form.imageUrl.trim();
       if (file) {
-        setStatus("Solicitando slot de upload...");
+        setStatus("Solicitando slot de upload…");
         const slot = await api.post<ImageSlot>(`/contents/${targetId}/image/upload`, {
           contentType: file.type || "image/jpeg"
         });
-        setStatus("Enviando imagem...");
+        setStatus("Enviando imagem…");
         const putRes = await fetch(slot.uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": slot.contentType },
@@ -212,7 +212,7 @@ export default function ContentDetailPage() {
     return null;
   }, [file, form.imageUrl]);
 
-  if (!isCreate && isLoading) return <div className="p-4">Carregando...</div>;
+  if (!isCreate && isLoading) return <div className="p-4">Carregando…</div>;
   if (!isCreate && (error || !data)) return <div className="p-4 text-red-600">Erro ao carregar conteúdo.</div>;
 
   const commentItems = commentsData?.items ?? [];
@@ -220,7 +220,7 @@ export default function ContentDetailPage() {
   const commentCount = data?.commentCount ?? commentItems.length ?? 0;
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-white">
+    <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader
         title={isCreate ? "Novo conteúdo" : data?.title ?? "Conteúdo"}
         subtitle={isCreate ? "Crie um novo conteúdo" : data?.thriftStoreName ?? data?.thriftStoreId}
@@ -229,9 +229,9 @@ export default function ContentDetailPage() {
             <button
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+              className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
             >
-              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+              {deleteMutation.isPending ? "Excluindo…" : "Excluir"}
             </button>
           ) : null
         }
@@ -253,9 +253,9 @@ export default function ContentDetailPage() {
           <button
             onClick={handleSave}
             disabled={creating || saving}
-            className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+            className="rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white disabled:opacity-60"
           >
-            {creating || saving ? "Salvando..." : "Salvar alterações"}
+            {creating || saving ? "Salvando…" : "Salvar alterações"}
           </button>
         </div>
 
@@ -269,7 +269,7 @@ export default function ContentDetailPage() {
               label="Loja (storeId) - Opcional para Admin"
               value={form.storeId}
               onChange={(v) => setForm({ ...form, storeId: v })}
-              placeholder="UUID da loja (deixe vazio para post global)"
+              placeholder="UUID da loja (deixe vazio para post global)…"
               maxLength={64}
             />
           </div>
@@ -279,14 +279,14 @@ export default function ContentDetailPage() {
               label="Categoria (opcional)"
               value={form.categoryLabel}
               onChange={(v) => setForm({ ...form, categoryLabel: v })}
-              placeholder="general"
+              placeholder="general…"
               maxLength={160}
             />
             <LabeledInput
               label="Tipo (opcional)"
               value={form.type}
               onChange={(v) => setForm({ ...form, type: v })}
-              placeholder="article"
+              placeholder="article…"
               maxLength={160}
             />
           </div>
@@ -294,11 +294,12 @@ export default function ContentDetailPage() {
           <div className="space-y-2">
             <span className="text-white/70 text-sm">Imagem (opcional)</span>
             <div className="flex flex-col gap-2">
-              <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:bg-white/10">
+              <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10">
                 Enviar arquivo
                 <input
                   type="file"
                   accept={ALLOWED_IMG.join(",")}
+                  name="content-image"
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
@@ -346,71 +347,77 @@ export default function ContentDetailPage() {
             </div>
           </div>
 
-          <table className="w-full text-left text-sm text-white">
-            <thead>
-              <tr className="text-xs uppercase tracking-wide text-white/60">
-                <th className="py-3 px-4">ID</th>
-                <th className="py-3 px-4">Usuário</th>
-                <th className="py-3 px-4">Comentário</th>
-                <th className="py-3 px-4">Criado em</th>
-                <th className="py-3 px-4">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {commentsLoading && (
-                <tr>
-                  <td className="py-3 px-4" colSpan={5}>
-                    Carregando...
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm text-white">
+              <thead>
+                <tr className="text-xs uppercase tracking-wide text-white/60">
+                  <th className="py-3 px-4">ID</th>
+                  <th className="py-3 px-4">Usuário</th>
+                  <th className="py-3 px-4">Comentário</th>
+                  <th className="py-3 px-4">Criado em</th>
+                  <th className="py-3 px-4">Ações</th>
                 </tr>
-              )}
-              {commentsError && (
-                <tr>
-                  <td className="py-3 px-4 text-red-300" colSpan={5}>
-                    Erro ao carregar comentários
-                  </td>
-                </tr>
-              )}
-              {!commentsLoading && !commentsError && commentItems.length === 0 && (
-                <EmptyStateRow colSpan={5} title="Nenhum comentário encontrado" description="Este conteúdo ainda não recebeu comentários." />
-              )}
-              {commentItems.map((comment) => (
-                <tr key={comment.id} className="border-t border-white/10 hover:bg-white/5">
-                  <td className="py-3 px-4 text-xs text-white/80">{comment.id}</td>
-                  <td className="py-3 px-4 text-white">
-                    {comment.userDisplayName ?? comment.userId ?? "—"}
-                  </td>
-                  <td className="py-3 px-4 text-white">{comment.body}</td>
-                  <td className="py-3 px-4 text-white">
-                    {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : "-"}
-                  </td>
-                  <td className="py-3 px-4">
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteComment(comment.id)}
-                      disabled={deleteCommentMutation.isPending}
-                      className="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600 disabled:opacity-50"
-                    >
-                      Apagar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {commentsLoading && (
+                  <tr>
+                    <td className="py-3 px-4" colSpan={5}>
+                      Carregando…
+                    </td>
+                  </tr>
+                )}
+                {commentsError && (
+                  <tr>
+                    <td className="py-3 px-4 text-red-300" colSpan={5}>
+                      Erro ao carregar comentários
+                    </td>
+                  </tr>
+                )}
+                {!commentsLoading && !commentsError && commentItems.length === 0 && (
+                  <EmptyStateRow
+                    colSpan={5}
+                    title="Nenhum comentário encontrado"
+                    description="Este conteúdo ainda não recebeu comentários."
+                  />
+                )}
+                {commentItems.map((comment) => (
+                  <tr key={comment.id} className="border-t border-white/10 hover:bg-white/5">
+                    <td className="py-3 px-4 text-xs text-white/80">{comment.id}</td>
+                    <td className="py-3 px-4 text-white">
+                      {comment.userDisplayName ?? comment.userId ?? "—"}
+                    </td>
+                    <td className="py-3 px-4 text-white break-words">{comment.body}</td>
+                    <td className="py-3 px-4 text-white">
+                      {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : "-"}
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteComment(comment.id)}
+                        disabled={deleteCommentMutation.isPending}
+                        className="rounded-full bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+                      >
+                        Apagar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div className="flex items-center justify-between text-sm">
             <button
               disabled={commentsPage === 0}
               onClick={() => setCommentsPage((p) => Math.max(0, p - 1))}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10 disabled:opacity-40"
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white shadow-sm transition-colors hover:bg-white/10 disabled:opacity-40"
             >
               Anterior
             </button>
             <button
               disabled={!commentsData?.hasNext}
               onClick={() => setCommentsPage((p) => p + 1)}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white transition hover:bg-white/10 disabled:opacity-40"
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-white shadow-sm transition-colors hover:bg-white/10 disabled:opacity-40"
             >
               Próxima
             </button>
@@ -437,6 +444,8 @@ function LabeledInput({
   type?: string;
   maxLength?: number;
 }) {
+  const inputName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
+  const resolvedSpellCheck = type === "email" || type === "password" ? false : undefined;
   return (
     <label className="flex flex-col gap-1 text-sm">
       {label ? <span className="text-white/70">{label}</span> : null}
@@ -446,7 +455,10 @@ function LabeledInput({
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+        name={inputName}
+        autoComplete="off"
+        spellCheck={resolvedSpellCheck}
+        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
       />
     </label>
   );
@@ -465,6 +477,7 @@ function LabeledTextArea({
   rows?: number;
   maxLength?: number;
 }) {
+  const inputName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="text-white/70">{label}</span>
@@ -473,7 +486,9 @@ function LabeledTextArea({
         rows={rows}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+        name={inputName}
+        autoComplete="off"
+        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
       />
     </label>
   );

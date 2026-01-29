@@ -36,5 +36,14 @@ export default function HomeRedirectPage() {
   }, [router]);
 
   // Keep the layout background while we decide where to send the user
-  return <div className="min-h-screen bg-background" aria-busy="true" />;
+  return (
+    <div className="min-h-screen bg-background" aria-busy="true">
+      <div className="flex min-h-screen items-center justify-center" role="status" aria-live="polite">
+        <div className="flex items-center gap-3 rounded-full border border-black/10 bg-white/70 px-4 py-2 text-sm font-semibold text-textSubtle shadow-sm">
+          <span className="h-2 w-2 rounded-full bg-brand-primary motion-safe:animate-pulse" aria-hidden="true" />
+          Carregando…
+        </div>
+      </div>
+    </div>
+  );
 }

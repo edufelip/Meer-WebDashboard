@@ -75,7 +75,7 @@ export default function ModerationCommentsPage() {
   const items = data?.items ?? [];
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-textDark">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader
         title="Moderação de comentários"
         subtitle="Audite comentários recentes e remova conteúdos inadequados."
@@ -86,6 +86,7 @@ export default function ModerationCommentsPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <input
+          type="search"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -94,8 +95,12 @@ export default function ModerationCommentsPage() {
               submitSearch();
             }
           }}
-          className="w-64 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-textDark placeholder:text-textSubtle/70 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
-          placeholder="Buscar por comentário ou usuário"
+          name="comment-search"
+          autoComplete="off"
+          spellCheck={false}
+          aria-label="Buscar comentários"
+          className="w-full sm:w-64 rounded-2xl border border-black/10 bg-white/80 px-4 py-2.5 text-sm text-textDark shadow-sm placeholder:text-textSubtle/70 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+          placeholder="Buscar por comentário ou usuário…"
         />
         <input
           value={contentIdInput}
@@ -106,8 +111,12 @@ export default function ModerationCommentsPage() {
               submitSearch();
             }
           }}
-          className="w-64 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-textDark placeholder:text-textSubtle/70 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
-          placeholder="Filtrar por contentId"
+          name="comment-content-id"
+          autoComplete="off"
+          spellCheck={false}
+          aria-label="Filtrar por contentId"
+          className="w-full sm:w-64 rounded-2xl border border-black/10 bg-white/80 px-4 py-2.5 text-sm text-textDark shadow-sm placeholder:text-textSubtle/70 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+          placeholder="Filtrar por contentId…"
         />
         <select
           value={sort}
@@ -115,7 +124,9 @@ export default function ModerationCommentsPage() {
             setPage(0);
             setSort(e.target.value as "newest" | "oldest");
           }}
-          className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-textDark focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+          name="comment-sort"
+          aria-label="Ordenar comentários"
+          className="rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm text-textDark shadow-sm focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
         >
           <option className="text-black" value="newest">
             Mais recentes
@@ -126,14 +137,15 @@ export default function ModerationCommentsPage() {
         </select>
         <button
           onClick={submitSearch}
-          className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white"
+          className="rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white"
         >
           Buscar
         </button>
       </div>
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-white">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[860px] text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
@@ -166,7 +178,7 @@ export default function ModerationCommentsPage() {
                   ) : null}
                 </td>
                 <td className="py-3 px-4 text-white">{comment.userDisplayName ?? comment.userId ?? "—"}</td>
-                <td className="py-3 px-4 text-white">{comment.body}</td>
+                <td className="py-3 px-4 text-white break-words">{comment.body}</td>
                 <td className="py-3 px-4 text-white/70">
                   {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : "-"}
                 </td>
@@ -175,7 +187,7 @@ export default function ModerationCommentsPage() {
                     type="button"
                     onClick={() => handleDelete(comment)}
                     disabled={deleteMutation.isPending}
-                    className="rounded-xl bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600 disabled:opacity-50"
+                    className="rounded-full bg-red-600/80 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
                   >
                     Apagar
                   </button>
@@ -183,14 +195,15 @@ export default function ModerationCommentsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       </GlassCard>
 
       <div className="flex items-center justify-between text-sm text-textDark">
         <button
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
+          className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-textDark shadow-sm transition-colors hover:bg-white disabled:opacity-40"
         >
           Anterior
         </button>
@@ -200,7 +213,7 @@ export default function ModerationCommentsPage() {
         <button
           disabled={!data?.hasNext}
           onClick={() => setPage((p) => p + 1)}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
+          className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-textDark shadow-sm transition-colors hover:bg-white disabled:opacity-40"
         >
           Próxima
         </button>

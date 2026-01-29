@@ -223,7 +223,7 @@ export default function StoreDetailPage() {
   if (isCreate) {
     if (!form) return null;
   } else {
-    if (isLoading) return <div className="p-4">Carregando...</div>;
+    if (isLoading) return <div className="p-4">Carregando…</div>;
     if (error || !data) return <div className="p-4 text-red-600">Erro ao carregar brechó.</div>;
     if (!form) return null;
   }
@@ -364,7 +364,7 @@ export default function StoreDetailPage() {
       if (isCreate) {
         const created = await createStore(payload);
         targetStoreId = created.id;
-        setFormMessage("Brechó criado. Salvando fotos...");
+        setFormMessage("Brechó criado. Salvando fotos…");
       } else if (changes > 0) {
         await updateStore(payload);
       }
@@ -462,7 +462,7 @@ export default function StoreDetailPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-textDark">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader
         title={isCreate ? "Novo brechó" : data?.name || "Brechó"}
         subtitle={
@@ -475,10 +475,10 @@ export default function StoreDetailPage() {
             {!isCreate && (
               <button
                 onClick={onDelete}
-                className="rounded-xl border border-red-500/70 bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-60"
+                className="rounded-2xl border border-red-500/70 bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-500 disabled:opacity-60"
                 disabled={deleteMutation.isPending}
               >
-                {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+                {deleteMutation.isPending ? "Excluindo…" : "Excluir"}
               </button>
             )}
           </div>
@@ -498,13 +498,13 @@ export default function StoreDetailPage() {
               <button
                 onClick={handleSaveBasic}
                 disabled={isSavingStore || isCreatingStore || savingAll}
-                className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+                className="rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white disabled:opacity-60"
               >
-                {savingAll || isSavingStore || isCreatingStore ? "Salvando..." : "Salvar alterações"}
+                {savingAll || isSavingStore || isCreatingStore ? "Salvando…" : "Salvar alterações"}
               </button>
             </div>
 
-            {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
+            {formError ? <p className="text-sm text-red-200">{formError}</p> : null}
             {formMessage ? <p className="text-sm text-white/80">{formMessage}</p> : null}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -513,7 +513,7 @@ export default function StoreDetailPage() {
                 label="Tagline"
                 value={form.tagline}
                 onChange={(v) => setForm({ ...form, tagline: v })}
-                placeholder="Frase curta"
+                placeholder="Frase curta…"
                 maxLength={280}
               />
               <LabeledTextArea
@@ -527,7 +527,7 @@ export default function StoreDetailPage() {
                 label="Horário de funcionamento"
                 value={form.openingHours}
                 onChange={(v) => setForm({ ...form, openingHours: v })}
-                placeholder="Ex: Seg-Sáb 10h-18h"
+                placeholder="Ex: Seg-Sáb 10h-18h…"
                 maxLength={256}
               />
               <div className="relative">
@@ -545,7 +545,7 @@ export default function StoreDetailPage() {
                       longitude: ""
                     });
                   }}
-                  placeholder="Rua, número, cidade"
+                  placeholder="Rua, número, cidade…"
                   maxLength={512}
                 />
                 <AddressSuggestions
@@ -572,6 +572,7 @@ export default function StoreDetailPage() {
                 <label className="flex items-center gap-2 text-sm text-white/90">
                   <input
                     type="checkbox"
+                    name="store-online"
                     className="h-4 w-4 rounded border-white/20 bg-white/10 text-brand-primary focus:ring-brand-primary"
                     checked={form.isOnlineStore}
                     onChange={(event) => setForm({ ...form, isOnlineStore: event.target.checked })}
@@ -590,52 +591,46 @@ export default function StoreDetailPage() {
                 onChange={(v) => setForm({ ...form, phone: v })}
                 maxLength={32}
               />
-              <LabeledInput
-                label="Whatsapp"
-                value={form.whatsapp}
-                onChange={(v) => setForm({ ...form, whatsapp: v })}
-                maxLength={32}
-              />
               <LabeledInput label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} maxLength={320} />
-              <LabeledInput
-                label="Instagram"
-                value={form.instagram}
-                onChange={(v) => setForm({ ...form, instagram: v })}
-                placeholder="@usuario"
-                maxLength={320}
-              />
+                <LabeledInput
+                  label="Instagram"
+                  value={form.instagram}
+                  onChange={(v) => setForm({ ...form, instagram: v })}
+                  placeholder="@usuario…"
+                  maxLength={320}
+                />
               <LabeledInput
                 label="Facebook"
                 value={form.facebook}
                 onChange={(v) => setForm({ ...form, facebook: v })}
                 maxLength={320}
               />
-              <LabeledInput
-                label="Website"
-                value={form.website}
-                onChange={(v) => setForm({ ...form, website: v })}
-                placeholder="https://"
-                maxLength={320}
-              />
-              <LabeledInput
-                label="Categorias (separadas por vírgula)"
-                value={form.categories}
-                onChange={(v) => setForm({ ...form, categories: v })}
-                placeholder="vintage, jeans, acessórios"
-                maxLength={512}
-              />
+                <LabeledInput
+                  label="Website"
+                  value={form.website}
+                  onChange={(v) => setForm({ ...form, website: v })}
+                  placeholder="https://…"
+                  maxLength={320}
+                />
+                <LabeledInput
+                  label="Categorias (separadas por vírgula)"
+                  value={form.categories}
+                  onChange={(v) => setForm({ ...form, categories: v })}
+                  placeholder="vintage, jeans, acessórios…"
+                  maxLength={512}
+                />
               <div className="grid grid-cols-2 gap-3">
                 <LabeledInput
                   label="Latitude"
                   value={form.latitude}
-                  placeholder="-23.55"
+                  placeholder="-23.55…"
                   readOnly
                   disabled
                 />
                 <LabeledInput
                   label="Longitude"
                   value={form.longitude}
-                  placeholder="-46.63"
+                  placeholder="-46.63…"
                   readOnly
                   disabled
                 />
@@ -649,12 +644,13 @@ export default function StoreDetailPage() {
                 <p className="text-lg font-semibold text-white">Fotos</p>
                 <p className="text-sm text-white/80">Máximo 10 fotos. JPEG ou WEBP até 2MB.</p>
               </div>
-              <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-textDark hover:bg-white/70">
+              <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm font-semibold text-textDark shadow-sm transition-colors hover:bg-white">
                 Adicionar fotos
                 <input
                   type="file"
                   accept={ALLOWED_TYPES.join(",")}
                   multiple
+                  name="store-photos"
                   className="hidden"
                   onChange={(e) => {
                     handleAddPhotos(e.target.files);
@@ -673,7 +669,14 @@ export default function StoreDetailPage() {
                   {photo.url ? (
                     <Image src={photo.url} alt={`Foto ${index + 1}`} width={400} height={300} className="h-32 w-full object-cover" />
                   ) : (
-                    <img src={photo.previewUrl} alt={`Pré-visualização ${index + 1}`} className="h-32 w-full object-cover" />
+                    <img
+                      src={photo.previewUrl}
+                      alt={`Pré-visualização ${index + 1}`}
+                      width={400}
+                      height={300}
+                      loading="lazy"
+                      className="h-32 w-full object-cover"
+                    />
                   )}
                   <div className="absolute inset-0 flex flex-col justify-between bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                     <div className="flex items-center gap-1 px-2 pt-2">
@@ -692,7 +695,8 @@ export default function StoreDetailPage() {
                         type="button"
                         onClick={() => movePhoto(photo.localId, -1)}
                         disabled={index === 0}
-                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20 disabled:opacity-50"
+                        aria-label="Mover foto para cima"
+                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white transition-colors hover:bg-white/20 disabled:opacity-50"
                       >
                         ↑
                       </button>
@@ -700,14 +704,15 @@ export default function StoreDetailPage() {
                         type="button"
                         onClick={() => movePhoto(photo.localId, 1)}
                         disabled={index === photoDrafts.length - 1}
-                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20 disabled:opacity-50"
+                        aria-label="Mover foto para baixo"
+                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white transition-colors hover:bg-white/20 disabled:opacity-50"
                       >
                         ↓
                       </button>
                       <button
                         type="button"
                         onClick={() => removePhoto(photo.localId)}
-                        className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/30"
+                        className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-100 transition-colors hover:bg-red-500/30"
                       >
                         Remover
                       </button>
@@ -815,7 +820,7 @@ async function processPhotosFlow({
   const pending = draftsCopy.filter((d) => d.file && !d.fileKey);
 
   if (pending.length > 0) {
-    setStatus("Solicitando URLs de upload...");
+    setStatus("Solicitando URLs de upload…");
     const uploadRes = await api.post<{ uploads: PhotoUploadSlot[] }>(`/stores/${storeId}/photos/uploads`, {
       count: pending.length,
       contentTypes: pending.map((p) => p.file?.type || "image/jpeg")
@@ -824,7 +829,7 @@ async function processPhotosFlow({
     const slots = uploadRes.uploads ?? [];
     if (slots.length !== pending.length) throw new Error("Resposta inesperada ao solicitar uploads.");
 
-    setStatus("Enviando arquivos...");
+    setStatus("Enviando arquivos…");
     await Promise.all(
       pending.map((draft, idx) => {
         const slot = slots[idx];
@@ -851,7 +856,7 @@ async function processPhotosFlow({
     };
   });
 
-  setStatus("Registrando ordem e capa...");
+  setStatus("Registrando ordem e capa…");
   const updated = await api.put<ThriftStore>(`/stores/${storeId}/photos`, {
     photos: photosPayload,
     deletePhotoIds: uniqueDeletes.length ? uniqueDeletes : undefined
@@ -878,16 +883,16 @@ function AddressSuggestions({
   }
   if (!loading && suggestions.length === 0) return null;
   return (
-    <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-black/10 bg-white shadow-xl">
+    <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-2xl border border-black/10 bg-white/90 shadow-xl backdrop-blur">
       {loading ? (
-        <p className="px-3 py-2 text-xs text-textSubtle">Buscando sugestões...</p>
+        <p className="px-3 py-2 text-xs text-textSubtle">Buscando sugestões…</p>
       ) : (
         suggestions.map((s) => (
           <button
             key={s.id}
             type="button"
             onClick={() => onSelect(s)}
-            className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-textDark hover:bg-black/5"
+            className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm text-textDark transition-colors hover:bg-black/5"
           >
             <span className="font-semibold">{s.label}</span>
             <span className="text-xs text-textSubtle">{s.placeName}</span>
@@ -916,6 +921,7 @@ function LabeledInput({
   readOnly?: boolean;
   maxLength?: number;
 }) {
+  const inputName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="text-white/70">{label}</span>
@@ -926,9 +932,12 @@ function LabeledInput({
         placeholder={placeholder}
         readOnly={readOnly}
         disabled={disabled}
+        name={inputName}
+        autoComplete="off"
+        spellCheck={false}
         className={clsx(
-          "rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40",
-          disabled || readOnly ? "cursor-not-allowed opacity-70 focus:ring-0" : ""
+          "rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40",
+          disabled || readOnly ? "cursor-not-allowed opacity-70 focus-visible:ring-0" : ""
         )}
       />
     </label>
@@ -948,6 +957,7 @@ function LabeledTextArea({
   rows?: number;
   maxLength?: number;
 }) {
+  const inputName = label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "field";
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="text-white/70">{label}</span>
@@ -956,7 +966,9 @@ function LabeledTextArea({
         rows={rows}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+        name={inputName}
+        autoComplete="off"
+        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
       />
     </label>
   );

@@ -34,34 +34,35 @@ export function DashboardSidebar({ items }: { items: SidebarItem[] }) {
   };
 
   return (
-    <aside className="h-full rounded-3xl bg-brand-forest border border-brand-card/50 p-4 text-white shadow-xl">
+    <aside className="relative flex h-full flex-col rounded-[2rem] border border-brand-card/40 bg-[linear-gradient(160deg,#833000_0%,#a73c00_45%,#b14300_100%)] p-4 text-white shadow-[0_25px_70px_-45px_rgba(67,26,0,0.8)]">
       <div className="flex items-center gap-3 px-2 py-2">
-        <div className="size-10 rounded-full bg-gradient-to-br from-brand-primary to-[#f0cdb5] ring-2 ring-brand-primary/25" />
+        <div className="size-10 rounded-full bg-gradient-to-br from-brand-primary to-[#f0cdb5] ring-2 ring-brand-primary/25 shadow-sm" />
         <div className="leading-tight">
           <p className="text-sm font-semibold tracking-wide">Guia Brechó</p>
           <p className="text-xs text-brand-muted">Painel Admin</p>
         </div>
       </div>
 
-      <nav className="mt-4 flex flex-col gap-2">
+      <nav className="mt-4 flex flex-col gap-2" aria-label="Navegação do painel">
         {items.map(({ label, href, icon, badge, active }) => {
           const Icon = iconMap[icon];
           return (
-          <Link
-            key={label}
-            href={href}
-            className={`group flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-all ${
-              active
-                ? "bg-brand-card text-white shadow-[0_10px_30px_-12px_rgba(0,0,0,0.45)]"
-                : "text-brand-muted hover:bg-brand-card/50 hover:text-white"
-            }`}
-          >
-            <Icon className={active ? "text-brand-primary" : "text-brand-muted group-hover:text-brand-primary"} />
-            <span className="flex-1">{label}</span>
-            {badge ? (
-              <span className="rounded-full bg-brand-primary px-2 py-0.5 text-xs font-bold text-brand-forest">{badge}</span>
-            ) : null}
-          </Link>
+            <Link
+              key={label}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`group flex items-center gap-3 rounded-full px-4 py-3 text-sm font-medium transition-colors transition-shadow ${
+                active
+                  ? "bg-white/10 text-white shadow-[0_12px_28px_-18px_rgba(0,0,0,0.6)]"
+                  : "text-brand-muted/90 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <Icon className={active ? "text-brand-primary" : "text-brand-muted/80 group-hover:text-brand-primary"} aria-hidden="true" />
+              <span className="flex-1">{label}</span>
+              {badge ? (
+                <span className="rounded-full bg-brand-primary px-2 py-0.5 text-xs font-bold text-brand-forest">{badge}</span>
+              ) : null}
+            </Link>
           );
         })}
       </nav>
@@ -70,9 +71,9 @@ export function DashboardSidebar({ items }: { items: SidebarItem[] }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-primary px-4 py-3 text-sm font-semibold text-brand-forest transition-all hover:scale-[1.01] hover:bg-white"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-primary px-4 py-3 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white"
         >
-          <ArrowRightIcon className="h-5 w-5" />
+          <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
           Sair do Sistema
         </button>
       </div>

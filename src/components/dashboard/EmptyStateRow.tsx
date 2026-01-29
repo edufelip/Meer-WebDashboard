@@ -16,7 +16,7 @@ export function EmptyStateRow({
         <div className="flex flex-col items-center gap-2 text-center">
           {icon ? <div className="text-brand-primary">{icon}</div> : null}
           <p className="text-sm font-semibold text-white">{title}</p>
-          {description ? <p className="text-sm text-white/60">{description}</p> : null}
+          {description ? <p className="text-sm text-white/60 max-w-md text-pretty">{description}</p> : null}
         </div>
       </td>
     </tr>

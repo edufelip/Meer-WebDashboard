@@ -30,7 +30,7 @@ export default function StoresPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10">
       <PageHeader
         title="Brechós"
         subtitle="Listar e moderar brechós cadastrados na plataforma."
@@ -38,11 +38,12 @@ export default function StoresPage() {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/stores/new"
-              className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-textDark transition hover:scale-[1.01] hover:bg-black/5"
+              className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-sm font-semibold text-textDark shadow-sm transition-colors hover:bg-white"
             >
               Novo brechó
             </Link>
             <input
+              type="search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -51,8 +52,12 @@ export default function StoresPage() {
                   submitSearch();
                 }
               }}
-              className="w-64 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-textDark placeholder:text-textSubtle/70 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
-              placeholder="Buscar por nome, endereço ou dono"
+              name="store-search"
+              autoComplete="off"
+              spellCheck={false}
+              aria-label="Buscar brechós"
+              className="w-full sm:w-64 rounded-2xl border border-black/10 bg-white/80 px-4 py-2.5 text-sm text-textDark shadow-sm placeholder:text-textSubtle/70 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+              placeholder="Buscar por nome, endereço ou dono…"
             />
             <select
               value={sort}
@@ -60,7 +65,9 @@ export default function StoresPage() {
                 setPage(0);
                 setSort(e.target.value as "newest" | "oldest");
               }}
-              className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-textDark focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+              name="store-sort"
+              aria-label="Ordenar brechós"
+              className="rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm text-textDark shadow-sm focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
             >
               <option className="text-black" value="newest">
                 Mais recentes
@@ -71,7 +78,7 @@ export default function StoresPage() {
             </select>
             <button
               onClick={submitSearch}
-              className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white"
+              className="rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white"
             >
               Buscar
             </button>
@@ -80,7 +87,8 @@ export default function StoresPage() {
       />
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-white">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
@@ -93,7 +101,7 @@ export default function StoresPage() {
             {isLoading && (
               <tr>
                 <td className="py-3 px-4" colSpan={4}>
-                  Carregando...
+                  Carregando…
                 </td>
               </tr>
             )}
@@ -122,14 +130,15 @@ export default function StoresPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       </GlassCard>
 
       <div className="flex items-center justify-between text-sm text-textDark">
         <button
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
+          className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-textDark shadow-sm transition-colors hover:bg-white disabled:opacity-40"
         >
           Anterior
         </button>
@@ -139,7 +148,7 @@ export default function StoresPage() {
         <button
           disabled={!data?.hasNext}
           onClick={() => setPage((p) => p + 1)}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
+          className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-textDark shadow-sm transition-colors hover:bg-white disabled:opacity-40"
         >
           Próxima
         </button>

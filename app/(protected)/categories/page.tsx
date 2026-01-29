@@ -74,7 +74,7 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col gap-6 p-4 sm:p-6 lg:p-10 text-white">
+    <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader title="Categorias" subtitle="Crie e edite categorias utilizadas pelos apps." />
 
       <GlassCard>
@@ -83,33 +83,45 @@ export default function CategoriesPage() {
             value={idInput}
             onChange={(e) => setIdInput(e.target.value)}
             maxLength={120}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
-            placeholder="ID (ex: casa)"
+            name="category-id"
+            autoComplete="off"
+            spellCheck={false}
+            aria-label="ID da categoria"
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+            placeholder="ID (ex: casa)…"
             required
           />
           <input
             value={nameStringIdInput}
             onChange={(e) => setNameStringIdInput(e.target.value)}
             maxLength={120}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
-            placeholder="nameStringId (ex: brecho_de_casa)"
+            name="category-name-string-id"
+            autoComplete="off"
+            spellCheck={false}
+            aria-label="nameStringId"
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+            placeholder="nameStringId (ex: brecho_de_casa)…"
             required
           />
           <input
             value={imageResIdInput}
             onChange={(e) => setImageResIdInput(e.target.value)}
             maxLength={240}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
-            placeholder="imageResId (ex: brecho-categories-house)"
+            name="category-image-res-id"
+            autoComplete="off"
+            spellCheck={false}
+            aria-label="imageResId"
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+            placeholder="imageResId (ex: brecho-categories-house)…"
             required
           />
           <div className="flex items-center gap-2">
             <button
               type="submit"
               disabled={upsertMutation.isPending}
-              className="rounded-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest transition hover:scale-[1.01] hover:bg-white disabled:opacity-60"
+              className="rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white disabled:opacity-60"
             >
-              {upsertMutation.isPending ? "Salvando..." : editId ? "Atualizar" : "Adicionar"}
+              {upsertMutation.isPending ? "Salvando…" : editId ? "Atualizar" : "Adicionar"}
             </button>
             {editId && (
               <button
@@ -120,7 +132,7 @@ export default function CategoriesPage() {
                   setNameStringIdInput("");
                   setImageResIdInput("");
                 }}
-                className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white transition hover:bg-white/20"
+                className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white transition-colors hover:bg-white/20"
               >
                 Cancelar
               </button>
@@ -130,7 +142,8 @@ export default function CategoriesPage() {
       </GlassCard>
 
       <GlassCard className="overflow-hidden">
-        <table className="w-full text-left text-sm text-white">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left text-sm text-white">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
@@ -144,7 +157,7 @@ export default function CategoriesPage() {
             {isLoading && (
               <tr>
                 <td className="py-3 px-4" colSpan={4}>
-                  Carregando...
+                  Carregando…
                 </td>
               </tr>
             )}
@@ -173,13 +186,13 @@ export default function CategoriesPage() {
                 <td className="py-3 px-4 flex gap-2">
                   <button
                     onClick={() => startEdit(cat)}
-                    className="rounded-lg border border-white/10 bg-white/10 px-3 py-1 text-xs text-white transition hover:bg-white/20"
+                    className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-white transition-colors hover:bg-white/20"
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => onDelete(cat.id)}
-                    className="rounded-lg bg-red-600/80 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-600"
+                    className="rounded-full bg-red-600/80 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-600"
                   >
                     Apagar
                   </button>
@@ -187,14 +200,15 @@ export default function CategoriesPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       </GlassCard>
 
       <div className="flex items-center justify-between text-sm text-textDark">
         <button
           disabled={page === 0}
           onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
+          className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-textDark shadow-sm transition-colors hover:bg-white disabled:opacity-40"
         >
           Anterior
         </button>
@@ -204,7 +218,7 @@ export default function CategoriesPage() {
         <button
           disabled={!data?.hasNext}
           onClick={() => setPage((p) => p + 1)}
-          className="rounded-xl border border-black/10 bg-white px-4 py-2 text-textDark transition hover:bg-black/5 disabled:opacity-40"
+          className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-textDark shadow-sm transition-colors hover:bg-white disabled:opacity-40"
         >
           Próxima
         </button>

@@ -1,6 +1,5 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { ShortcutGrid, type ShortcutItem } from "@/components/dashboard/ShortcutGrid";
 import { DashboardSidebar, type SidebarItem } from "@/components/dashboard/Sidebar";
@@ -41,11 +40,10 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-background text-textDark">
-      <div className="grid min-h-screen w-full gap-6 p-4 sm:p-6 lg:grid-cols-[280px,1fr] lg:p-10">
+    <div className="min-h-screen w-full text-textDark">
+      <div className="mx-auto grid min-h-screen w-full max-w-7xl gap-6 px-4 pb-10 pt-6 sm:px-6 lg:grid-cols-[280px,1fr] lg:px-10">
         <DashboardSidebar items={sidebarItems} />
         <section className="flex flex-col gap-8 lg:gap-12">
-          <DashboardHeader notifications={3} />
           <div className="flex flex-col gap-8 lg:gap-12">
             <DashboardHero
               title="Resumo"

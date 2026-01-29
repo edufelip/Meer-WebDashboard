@@ -32,7 +32,7 @@ export function TableSkeletonRows({
                 <div
                   key={colIndex}
                   className={clsx(
-                    "h-8 animate-pulse rounded-lg bg-white/10",
+                    "h-8 rounded-lg bg-white/10 motion-safe:animate-pulse",
                     span > 1 ? `col-span-${span}` : ""
                   )}
                 />
@@ -54,7 +54,9 @@ export function TableErrorRow({ colSpan, message, onRetry, actionLabel = "Tentar
           <button
             type="button"
             onClick={onRetry}
-            className={clsx("rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20")}
+            className={clsx(
+              "rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+            )}
           >
             {actionLabel}
           </button>
