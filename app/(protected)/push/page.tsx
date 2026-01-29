@@ -27,6 +27,8 @@ type PushHistoryItem = {
 };
 
 const ENV_OPTIONS: PushEnvironment[] = ["DEV", "STAGING", "PROD"];
+const HISTORY_STORAGE_PREFIX = "dashboard.push.history";
+const MAX_HISTORY_ITEMS = 10;
 
 export default function PushPage() {
   const defaultEnv = useMemo<PushEnvironment>(() => (isDevDomain() ? "DEV" : "PROD"), []);
@@ -75,12 +77,35 @@ export default function PushPage() {
     }
   }, [enforcedEnv]);
 
+  const historyScope = useMemo(
+    () => ((enforcedEnv ?? defaultEnv) === "PROD" ? "PROD" : "DEV"),
+    [defaultEnv, enforcedEnv]
+  );
+  const historyKey = useMemo(() => `${HISTORY_STORAGE_PREFIX}.${historyScope}`, [historyScope]);
   const [history, setHistory] = useState<PushHistoryItem[]>([]);
+  const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nextHistory = readHistoryFromStorage(historyKey);
+    setHistory(nextHistory);
+    setHydratedKey(historyKey);
+  }, [historyKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (hydratedKey !== historyKey) return;
+    try {
+      window.localStorage.setItem(historyKey, JSON.stringify(history));
+    } catch {
+      // Storage might be full or blocked; ignore.
+    }
+  }, [history, historyKey, hydratedKey]);
+
   const addHistory = (item: PushHistoryItem) => {
-    setHistory((prev) => [item, ...prev].slice(0, 10));
+    setHistory((prev) => [item, ...prev].slice(0, MAX_HISTORY_ITEMS));
   };
 
   const sendTokenMutation = useMutation({
@@ -376,8 +401,10 @@ export default function PushPage() {
 
       <GlassCard className="space-y-4">
         <div>
-          <p className="text-lg font-semibold text-white">Envios recentes (sessão)</p>
-          <p className="text-sm text-white/70">Histórico local apenas nesta sessão.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-lg font-semibold text-white">Envios recentes</p>
+            <Pill className="bg-white/10 text-xs uppercase tracking-wide text-white/80">{historyScope}</Pill>
+          </div>
         </div>
         {history.length === 0 ? (
           <p className="text-sm text-white/70">Nenhum push enviado ainda.</p>
@@ -507,5 +534,18 @@ function newId(): string {
     return crypto.randomUUID();
   } catch {
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+}
+
+function readHistoryFromStorage(storageKey: string): PushHistoryItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.slice(0, MAX_HISTORY_ITEMS) as PushHistoryItem[];
+  } catch {
+    return [];
   }
 }
