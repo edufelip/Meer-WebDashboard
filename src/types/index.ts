@@ -3,7 +3,6 @@ export type ThriftStore = {
   name: string;
   addressLine?: string;
   description?: string;
-  tagline?: string;
   coverImageUrl?: string;
   isOnlineStore?: boolean;
   images?: Array<{

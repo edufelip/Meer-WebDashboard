@@ -12,7 +12,6 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 
 type StoreFormState = {
   name: string;
-  tagline: string;
   description: string;
   openingHours: string;
   addressLine: string;
@@ -47,7 +46,6 @@ const ADDRESS_DEBOUNCE_MS = 500;
 
 const emptyFormState: StoreFormState = {
   name: "",
-  tagline: "",
   description: "",
   openingHours: "",
   addressLine: "",
@@ -134,7 +132,6 @@ export default function StoreDetailPage() {
     if (!data) return;
     setForm({
       name: data.name ?? "",
-      tagline: data.tagline ?? "",
       description: data.description ?? "",
       openingHours: data.openingHours ?? "",
       addressLine: data.addressLine ?? "",
@@ -274,7 +271,6 @@ export default function StoreDetailPage() {
       }
     };
 
-    applyField("tagline", current?.tagline);
     if (isCreate && form.description.trim() === "") {
       setFormError("A descrição é obrigatória.");
       return;
@@ -290,7 +286,9 @@ export default function StoreDetailPage() {
     applyField("phone", current?.phone);
     applyField("whatsapp", current?.whatsapp);
     applyField("email", current?.email);
-    // social handled separately
+    applyField("instagram", current?.instagram);
+    applyField("facebook", current?.facebook);
+    applyField("website", current?.website);
 
     const newCategories = normalizeCategories(form.categories);
     if (newCategories.length > 10) {
@@ -334,15 +332,6 @@ export default function StoreDetailPage() {
     } else if (isCreate) {
       setFormError("Latitude e longitude são obrigatórias.");
       return;
-    }
-
-    const socialPayload = buildSocialPayload(form, current ?? null);
-    if (socialPayload) {
-      payload.social = socialPayload;
-      // avoid sending deprecated flat fields
-      delete payload.facebook;
-      delete payload.instagram;
-      delete payload.website;
     }
 
     const baseImages = isCreate ? [] : (data?.images ?? []);
@@ -464,7 +453,7 @@ export default function StoreDetailPage() {
         subtitle={
           isCreate
             ? "Preencha os dados para criar um novo brechó."
-            : data?.tagline || data?.addressLine || "Detalhes do brechó"
+            : data?.description || data?.addressLine || "Detalhes do brechó"
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -505,13 +494,6 @@ export default function StoreDetailPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <LabeledInput label="Nome *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} maxLength={120} />
-              <LabeledInput
-                label="Tagline"
-                value={form.tagline}
-                onChange={(v) => setForm({ ...form, tagline: v })}
-                placeholder="Frase curta…"
-                maxLength={280}
-              />
               <LabeledTextArea
                 label="Descrição"
                 value={form.description}
@@ -758,24 +740,6 @@ function extractNeighborhood(feature: any): string | undefined {
   const neighborhood = ctx.find((c) => c.id?.startsWith("neighborhood"));
   const place = ctx.find((c) => c.id?.startsWith("place"));
   return neighborhood?.text || place?.text;
-}
-
-function buildSocialPayload(form: StoreFormState, current: ThriftStore | null) {
-  const social = {
-    facebook: form.facebook.trim() || null,
-    instagram: form.instagram.trim() || null,
-    website: form.website.trim() || null
-  };
-  const existing = {
-    facebook: current?.facebook ?? null,
-    instagram: current?.instagram ?? null,
-    website: current?.website ?? null
-  };
-
-  const changed =
-    social.facebook !== existing.facebook || social.instagram !== existing.instagram || social.website !== existing.website;
-  if (!changed) return null;
-  return social;
 }
 
 function arePhotosDirty(drafts: PhotoDraft[], deleted: (string | number)[], baseImages: ThriftStore["images"]): boolean {
