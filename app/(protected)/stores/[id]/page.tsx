@@ -287,10 +287,6 @@ export default function StoreDetailPage() {
       payload.isOnlineStore = nextOnline;
       changes++;
     }
-    if (isCreate && form.phone.trim() === "") {
-      setFormError("O telefone é obrigatório.");
-      return;
-    }
     applyField("phone", current?.phone);
     applyField("whatsapp", current?.whatsapp);
     applyField("email", current?.email);
@@ -586,7 +582,7 @@ export default function StoreDetailPage() {
               </div>
               <LabeledInput label="Bairro" value={form.neighborhood} readOnly disabled maxLength={120} />
               <LabeledInput
-                label="Telefone *"
+                label="Telefone"
                 value={form.phone}
                 onChange={(v) => setForm({ ...form, phone: v })}
                 maxLength={32}
