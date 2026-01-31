@@ -564,7 +564,7 @@ export default function StoreDetailPage() {
               </div>
               <LabeledInput label="Bairro" value={form.neighborhood} readOnly disabled maxLength={120} />
               <LabeledInput
-                label="Telefone"
+                label="Telefone (opcional)"
                 value={form.phone}
                 onChange={(v) => setForm({ ...form, phone: v })}
                 maxLength={32}
