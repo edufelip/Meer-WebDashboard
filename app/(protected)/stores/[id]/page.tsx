@@ -3,12 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Image from "next/image";
 import clsx from "classnames";
 import { api } from "@/lib/api";
-import type { ThriftStore } from "@/types/index";
+import type { DashboardStoreDetailsResponse, ThriftStore } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { StoreOwnerCard } from "@/components/stores/StoreOwnerCard";
+import { StorePhotosCard } from "@/components/stores/StorePhotosCard";
 
 type StoreFormState = {
   name: string;
@@ -96,9 +97,11 @@ export default function StoreDetailPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["store", storeId],
-    queryFn: () => api.get<ThriftStore>(`/stores/${storeId}`),
+    queryFn: () => api.get<DashboardStoreDetailsResponse>(`/dashboard/stores/${storeId}`),
     enabled: Boolean(storeId) && !isCreate
   });
+  const store = data?.store;
+  const owner = data?.owner ?? null;
 
   const deleteMutation = useMutation({
     mutationFn: () => api.del(`/stores/${storeId}`),
@@ -129,32 +132,32 @@ export default function StoreDetailPage() {
   });
 
   useEffect(() => {
-    if (!data) return;
+    if (!store) return;
     setForm({
-      name: data.name ?? "",
-      description: data.description ?? "",
-      openingHours: data.openingHours ?? "",
-      addressLine: data.addressLine ?? "",
-      neighborhood: data.neighborhood ?? "",
-      isOnlineStore: Boolean(data.isOnlineStore),
-      phone: data.phone ?? "",
-      whatsapp: data.whatsapp ?? "",
-      email: data.email ?? "",
-      instagram: data.instagram ?? "",
-      facebook: data.facebook ?? "",
-      website: data.website ?? "",
-      categories: (data.categories ?? []).join(", "),
-      latitude: data.latitude != null ? String(data.latitude) : "",
-      longitude: data.longitude != null ? String(data.longitude) : ""
+      name: store.name ?? "",
+      description: store.description ?? "",
+      openingHours: store.openingHours ?? "",
+      addressLine: store.addressLine ?? "",
+      neighborhood: store.neighborhood ?? "",
+      isOnlineStore: Boolean(store.isOnlineStore),
+      phone: store.phone ?? "",
+      whatsapp: store.whatsapp ?? "",
+      email: store.email ?? "",
+      instagram: store.instagram ?? "",
+      facebook: store.facebook ?? "",
+      website: store.website ?? "",
+      categories: (store.categories ?? []).join(", "),
+      latitude: store.latitude != null ? String(store.latitude) : "",
+      longitude: store.longitude != null ? String(store.longitude) : ""
     });
-    setAddressQuery(data.addressLine ?? "");
-    setPhotoDrafts(buildPhotoDrafts(data));
+    setAddressQuery(store.addressLine ?? "");
+    setPhotoDrafts(buildPhotoDrafts(store));
     setDeletedPhotoIds([]);
     setPhotoError(null);
     setPhotoStatus(null);
     setAddressError(null);
     setAddressSuggestions([]);
-  }, [data]);
+  }, [store]);
 
   const mapboxToken =
     process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.EXPO_PUBLIC_MAPBOX_TOKEN || process.env.MAPBOX_TOKEN;
@@ -221,13 +224,13 @@ export default function StoreDetailPage() {
     if (!form) return null;
   } else {
     if (isLoading) return <div className="p-4">Carregando…</div>;
-    if (error || !data) return <div className="p-4 text-red-600">Erro ao carregar brechó.</div>;
+    if (error || !store) return <div className="p-4 text-red-600">Erro ao carregar brechó.</div>;
     if (!form) return null;
   }
 
   const handleSaveBasic = async () => {
     if (!form) return;
-    const current = isCreate ? null : data;
+    const current = isCreate ? null : store;
     setFormError(null);
     setFormMessage(null);
     setPhotoError(null);
@@ -334,7 +337,7 @@ export default function StoreDetailPage() {
       return;
     }
 
-    const baseImages = isCreate ? [] : (data?.images ?? []);
+    const baseImages = isCreate ? [] : (store?.images ?? []);
     const photosDirty = arePhotosDirty(photoDrafts, deletedPhotoIds, baseImages);
 
     if (!photosDirty && changes === 0) {
@@ -449,11 +452,11 @@ export default function StoreDetailPage() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">
       <PageHeader
-        title={isCreate ? "Novo brechó" : data?.name || "Brechó"}
+        title={isCreate ? "Novo brechó" : store?.name || "Brechó"}
         subtitle={
           isCreate
             ? "Preencha os dados para criar um novo brechó."
-            : data?.description || data?.addressLine || "Detalhes do brechó"
+            : store?.description || store?.addressLine || "Detalhes do brechó"
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -616,95 +619,18 @@ export default function StoreDetailPage() {
             </div>
           </GlassCard>
 
-          <GlassCard className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-lg font-semibold text-white">Fotos</p>
-                <p className="text-sm text-white/80">Máximo 10 fotos. JPEG ou WEBP até 2MB.</p>
-              </div>
-              <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm font-semibold text-textDark shadow-sm transition-colors hover:bg-white">
-                Adicionar fotos
-                <input
-                  type="file"
-                  accept={ALLOWED_TYPES.join(",")}
-                  multiple
-                  name="store-photos"
-                  className="hidden"
-                  onChange={(e) => {
-                    handleAddPhotos(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-            </div>
+          {!isCreate ? <StoreOwnerCard storeId={storeId} owner={owner} /> : null}
 
-            {photoError ? <p className="text-sm text-red-300">{photoError}</p> : null}
-            {photoStatus ? <p className="text-sm text-brand-muted">{photoStatus}</p> : null}
-
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {photoDrafts.map((photo, index) => (
-                <div key={photo.localId} className="group relative overflow-hidden rounded-xl border border-black/10">
-                  {photo.url ? (
-                    <Image src={photo.url} alt={`Foto ${index + 1}`} width={400} height={300} className="h-32 w-full object-cover" />
-                  ) : (
-                    <img
-                      src={photo.previewUrl}
-                      alt={`Pré-visualização ${index + 1}`}
-                      width={400}
-                      height={300}
-                      loading="lazy"
-                      className="h-32 w-full object-cover"
-                    />
-                  )}
-                  <div className="absolute inset-0 flex flex-col justify-between bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                    <div className="flex items-center gap-1 px-2 pt-2">
-                      <Chip active={index === 0}>Capa</Chip>
-                      <button
-                        type="button"
-                        onClick={() => setAsCover(photo.localId)}
-                        className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-white hover:bg-white/20"
-                        disabled={index === 0}
-                      >
-                        Definir capa
-                      </button>
-                    </div>
-                    <div className="flex justify-between gap-1 px-2 pb-2">
-                      <button
-                        type="button"
-                        onClick={() => movePhoto(photo.localId, -1)}
-                        disabled={index === 0}
-                        aria-label="Mover foto para cima"
-                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white transition-colors hover:bg-white/20 disabled:opacity-50"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => movePhoto(photo.localId, 1)}
-                        disabled={index === photoDrafts.length - 1}
-                        aria-label="Mover foto para baixo"
-                        className="rounded-full bg-white/10 px-3 py-1 text-xs text-white transition-colors hover:bg-white/20 disabled:opacity-50"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(photo.localId)}
-                        className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-100 transition-colors hover:bg-red-500/30"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </div>
-                  {index === 0 && (
-                    <span className="absolute left-2 top-2 rounded bg-black/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-                      Capa
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </GlassCard>
+          <StorePhotosCard
+            photoDrafts={photoDrafts}
+            photoError={photoError}
+            photoStatus={photoStatus}
+            allowedTypes={ALLOWED_TYPES}
+            onAddPhotos={handleAddPhotos}
+            onSetAsCover={setAsCover}
+            onMovePhoto={movePhoto}
+            onRemovePhoto={removePhoto}
+          />
         </>
       )}
     </div>
@@ -864,6 +790,7 @@ function AddressSuggestions({
   );
 }
 
+
 function LabeledInput({
   label,
   value,
@@ -931,18 +858,5 @@ function LabeledTextArea({
         className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
       />
     </label>
-  );
-}
-
-function Chip({ children, active }: { children: React.ReactNode; active?: boolean }) {
-  return (
-    <span
-      className={clsx(
-        "rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-wide",
-        active ? "bg-brand-primary text-brand-forest" : "bg-white/10 text-white"
-      )}
-    >
-      {children}
-    </span>
   );
 }

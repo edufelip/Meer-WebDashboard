@@ -21,13 +21,6 @@ export function middleware(req: NextRequest) {
     const backendBase = pickBackendBase(host);
     const path = req.nextUrl.pathname;
 
-    // Special-case: admin store detail hits the public store endpoint
-    if (path.startsWith("/api/dashboard/stores/")) {
-      const target = new URL(path.replace("/api/dashboard/stores/", "/stores/"), backendBase);
-      target.search = req.nextUrl.search;
-      return NextResponse.rewrite(target);
-    }
-
     const target = new URL(path.replace(/^\/api/, ""), backendBase);
     target.search = req.nextUrl.search;
     return NextResponse.rewrite(target);

@@ -9,6 +9,20 @@ const APP_PACKAGE = process.env.NEXT_PUBLIC_APP_PACKAGE || process.env.EXPO_PUBL
 let refreshPromise: Promise<boolean> | null = null;
 let isRefreshing = false;
 
+export class ApiError extends Error {
+  status: number;
+  path: string;
+  body?: unknown;
+
+  constructor(status: number, path: string, body?: unknown) {
+    super(`API error ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.path = path;
+    this.body = body;
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}, attempt = 0): Promise<T> {
   // If a refresh is in-flight, wait for it before issuing this request
   if (isRefreshing && refreshPromise) {
@@ -34,13 +48,6 @@ async function request<T>(path: string, options: RequestInit = {}, attempt = 0):
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[API][REQUEST]", options.method ?? "GET", `${BASE_URL}${path}`, {
-      body: options.body,
-      headers
-    });
-  }
-
   if (res.status === 401 && attempt === 0) {
     // start or reuse refresh
     if (!refreshPromise) {
@@ -59,20 +66,8 @@ async function request<T>(path: string, options: RequestInit = {}, attempt = 0):
   }
 
   if (!res.ok) {
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[API][RESPONSE][ERROR]", res.status, path);
-    }
-    throw new Error(`API error ${res.status}`);
-  }
-
-  if (process.env.NODE_ENV !== "production") {
-    const clone = res.clone();
-    try {
-      const data = await clone.json();
-      console.log("[API][RESPONSE]", res.status, path, data);
-    } catch {
-      console.log("[API][RESPONSE]", res.status, path);
-    }
+    const body = await parseResponseBody(res);
+    throw new ApiError(res.status, path, body);
   }
 
   if (res.status === 204) return undefined as T;
@@ -99,8 +94,11 @@ async function refreshToken(): Promise<boolean> {
       },
       body: JSON.stringify({ refreshToken: refresh })
     });
+
     if (!res.ok) return false;
+
     const data = (await res.json()) as { token: string; refreshToken?: string };
+
     setToken(data.token);
     if (data.refreshToken) setRefreshToken(data.refreshToken);
     return true;
@@ -108,4 +106,22 @@ async function refreshToken(): Promise<boolean> {
     clearToken();
     return false;
   }
+}
+
+async function parseResponseBody(res: Response): Promise<unknown> {
+  const clone = res.clone();
+  const contentType = clone.headers.get("content-type") ?? "";
+  let body: unknown;
+  try {
+    if (res.status === 204) return undefined;
+    if (contentType.includes("application/json")) {
+      body = await clone.json();
+    } else {
+      const text = await clone.text();
+      body = text || undefined;
+    }
+  } catch (err) {
+    body = `[unparseable-body: ${err instanceof Error ? err.message : String(err)}]`;
+  }
+  return body;
 }

@@ -33,6 +33,19 @@ export type ThriftStore = {
   walkTimeMinutes?: number | null;
 };
 
+export type StoreOwner = {
+  id: string;
+  displayName: string;
+  email: string;
+  photoUrl: string | null;
+  createdAt: string;
+};
+
+export type DashboardStoreDetailsResponse = {
+  store: ThriftStore;
+  owner: StoreOwner | null;
+};
+
 export type GuideContent = {
   id: string;
   title: string;
