@@ -8,7 +8,11 @@ const displayFont = Fraunces({ subsets: ["latin", "latin-ext"], variable: "--fon
 export const metadata: Metadata = {
   title: "Guia Brechó Admin",
   description: "Administração do Guia Brechó",
-  themeColor: "#f7f2eb"
+  themeColor: "#f7f2eb",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
