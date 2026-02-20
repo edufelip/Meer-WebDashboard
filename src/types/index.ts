@@ -46,6 +46,14 @@ export type DashboardStoreDetailsResponse = {
   owner: StoreOwner | null;
 };
 
+export type DashboardStoreSummary = {
+  id: string;
+  name: string;
+  addressLine: string;
+  isOnlineStore: boolean;
+  createdAt: string;
+};
+
 export type GuideContent = {
   id: string;
   title: string;

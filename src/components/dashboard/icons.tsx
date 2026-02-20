@@ -96,6 +96,17 @@ export function BellIcon({ className, ...rest }: IconProps) {
   );
 }
 
+export function HeartIcon({ className, ...rest }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={buildClass(className)} {...rest}>
+      <path
+        d="M12 20s-7-4.6-8.7-8.5C2 8.4 3.6 5 7.2 5c2 0 3.4 1.1 4.8 2.9C13.4 6.1 14.8 5 16.8 5c3.6 0 5.2 3.4 3.9 6.5C19 15.4 12 20 12 20z"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function ArrowRightIcon({ className, ...rest }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={buildClass(className)} {...rest}>
@@ -115,5 +126,6 @@ export const dashboardIcons = {
   moderation: HammerIcon,
   categories: CategoryIcon,
   notifications: BellIcon,
+  favorites: HeartIcon,
   arrow: ArrowRightIcon
 };

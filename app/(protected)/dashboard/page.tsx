@@ -20,12 +20,14 @@ export default function DashboardPage() {
     { label: "Visão Geral", href: "/dashboard", icon: "dashboard", active: true },
     { label: "Usuários", href: "/users", icon: "users" },
     { label: "Brechós", href: "/stores", icon: "stores" },
+    { label: "Favoritos", href: "/favorites", icon: "favorites" },
     { label: "Moderação", href: "/moderation/images", icon: "approvals", badge: moderationBadge },
     { label: "Configurações", href: "/dashboard", icon: "settings" }
   ];
 
   const shortcuts: ShortcutItem[] = [
     { title: "Brechós", description: "Listar e moderar brechós", href: "/stores", icon: dashboardIcons.stores },
+    { title: "Favoritos", description: "Listar favoritos por usuário", href: "/favorites", icon: dashboardIcons.favorites },
     { title: "Conteúdos", description: "Publicações dos brechós", href: "/contents", icon: dashboardIcons.contents },
     { title: "Usuários", description: "Gerenciar contas e privilégios", href: "/users", icon: dashboardIcons.users },
     {
