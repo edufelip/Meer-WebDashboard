@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import "./globals.css";
 
@@ -8,11 +8,19 @@ const displayFont = Fraunces({ subsets: ["latin", "latin-ext"], variable: "--fon
 export const metadata: Metadata = {
   title: "Guia Brechó Admin",
   description: "Administração do Guia Brechó",
-  themeColor: "#f7f2eb",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico"
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" }
+    ],
+    shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
   }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f7f2eb"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
