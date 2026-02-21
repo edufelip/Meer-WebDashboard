@@ -44,13 +44,15 @@ export type StoreOwner = {
 export type DashboardStoreDetailsResponse = {
   store: ThriftStore;
   owner: StoreOwner | null;
+  favoriteUserCount: number;
 };
 
-export type DashboardStoreSummary = {
+export type DashboardFavoriteUser = {
   id: string;
   name: string;
-  addressLine: string;
-  isOnlineStore: boolean;
+  email: string;
+  avatarUrl?: string | null;
+  role?: string | null;
   createdAt: string;
 };
 

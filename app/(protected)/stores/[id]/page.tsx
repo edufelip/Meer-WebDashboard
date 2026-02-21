@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "classnames";
@@ -102,6 +103,7 @@ export default function StoreDetailPage() {
   });
   const store = data?.store;
   const owner = data?.owner ?? null;
+  const favoriteUserCount = data?.favoriteUserCount ?? 0;
 
   const deleteMutation = useMutation({
     mutationFn: () => api.del(`/stores/${storeId}`),
@@ -461,6 +463,14 @@ export default function StoreDetailPage() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {!isCreate && (
+              <Link
+                href={`/stores/${storeId}/favorites`}
+                className="rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-sm font-semibold text-textDark shadow-sm transition-colors hover:bg-white"
+              >
+                Ver usuários que favoritaram
+              </Link>
+            )}
+            {!isCreate && (
               <button
                 onClick={onDelete}
                 className="rounded-2xl border border-red-500/70 bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-500 disabled:opacity-60"
@@ -618,6 +628,26 @@ export default function StoreDetailPage() {
               </div>
             </div>
           </GlassCard>
+
+          {!isCreate ? (
+            <GlassCard>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-lg font-semibold text-white">Favoritos</p>
+                  <p className="text-sm text-white/80">
+                    Este brechó foi favoritado por <span className="font-semibold text-white">{favoriteUserCount}</span>{" "}
+                    usuário(s).
+                  </p>
+                </div>
+                <Link
+                  href={`/stores/${storeId}/favorites`}
+                  className="rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-transform transition-colors duration-200 hover:-translate-y-0.5 hover:bg-white"
+                >
+                  Abrir lista
+                </Link>
+              </div>
+            </GlassCard>
+          ) : null}
 
           {!isCreate ? <StoreOwnerCard storeId={storeId} owner={owner} /> : null}
 
