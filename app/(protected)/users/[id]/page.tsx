@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import clsx from "classnames";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import { toStorageObjectUrl } from "@/lib/storage";
 import type { User } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
@@ -88,7 +89,7 @@ export default function UserDetailPage() {
   const { mutateAsync: signup, isPending: creating } = useMutation({
     mutationFn: (payload: any) => api.post<{ user: User }>(`/auth/signup`, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
-    onError: () => setFormError("Não foi possível criar o usuário. Verifique os dados.")
+    onError: (error) => setFormError(getErrorMessage(error, "Não foi possível criar o usuário. Verifique os dados."))
   });
 
   const { mutateAsync: patchProfile, isPending: savingProfile } = useMutation({
@@ -98,7 +99,7 @@ export default function UserDetailPage() {
       await qc.invalidateQueries({ queryKey: ["users"] });
       await qc.invalidateQueries({ queryKey: ["me"] });
     },
-    onError: () => setFormError("Não foi possível salvar. Verifique os campos.")
+    onError: (error) => setFormError(getErrorMessage(error, "Não foi possível salvar. Verifique os campos."))
   });
 
   const { mutateAsync: patchUser, isPending: savingUser } = useMutation({
@@ -108,7 +109,7 @@ export default function UserDetailPage() {
       await qc.invalidateQueries({ queryKey: ["users"] });
       if (authMeId === userId) await qc.invalidateQueries({ queryKey: ["me"] });
     },
-    onError: () => setFormError("Não foi possível salvar. Verifique os campos.")
+    onError: (error) => setFormError(getErrorMessage(error, "Não foi possível salvar. Verifique os campos."))
   });
 
   const saving = savingProfile || savingUser;
@@ -118,7 +119,7 @@ export default function UserDetailPage() {
     const confirmed = window.confirm("Deseja excluir este usuário?");
     if (!confirmed) return;
     deleteMutation.mutate(undefined, {
-      onError: () => alert("Não foi possível excluir o usuário.")
+      onError: (error) => alert(getErrorMessage(error, "Não foi possível excluir o usuário."))
     });
   };
 
@@ -188,7 +189,7 @@ export default function UserDetailPage() {
       setFormMessage("Alterações salvas.");
     } catch (err) {
       console.error(err);
-      setFormError("Não foi possível salvar. Verifique os campos ou o arquivo de avatar.");
+      setFormError(getErrorMessage(err, "Não foi possível salvar. Verifique os campos ou o arquivo de avatar."));
     }
   };
 
@@ -199,7 +200,7 @@ export default function UserDetailPage() {
   }, [avatarFile, form.avatarUrl]);
 
   if (!isCreate && isLoading) return <div className="p-4">Carregando…</div>;
-  if (!isCreate && (error || !data)) return <div className="p-4 text-red-600">Erro ao carregar usuário.</div>;
+  if (!isCreate && (error || !data)) return <div className="p-4 text-red-600">{getErrorMessage(error, "Erro ao carregar usuário.")}</div>;
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">

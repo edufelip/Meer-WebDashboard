@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "classnames";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { DashboardStoreDetailsResponse, ThriftStore } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -120,8 +121,7 @@ export default function StoreDetailPage() {
     onSuccess: async () => {
       setFormError(null);
       await qc.invalidateQueries({ queryKey: ["store", storeId] });
-    },
-    onError: () => setFormError("Não foi possível salvar. Verifique os campos e tente novamente.")
+    }
   });
 
   const { mutateAsync: createStore, isPending: isCreatingStore } = useMutation({
@@ -129,8 +129,7 @@ export default function StoreDetailPage() {
     onSuccess: async () => {
       setFormError(null);
       await qc.invalidateQueries({ queryKey: ["stores"] });
-    },
-    onError: () => setFormError("Não foi possível salvar. Verifique os campos e tente novamente.")
+    }
   });
 
   useEffect(() => {
@@ -215,8 +214,8 @@ export default function StoreDetailPage() {
           router.replace("/stores");
           router.refresh();
         },
-        onError: () => {
-          alert("Não foi possível excluir o brechó. Tente novamente.");
+        onError: (error) => {
+          alert(getErrorMessage(error, "Não foi possível excluir o brechó. Tente novamente."));
         }
       });
     }
@@ -226,7 +225,7 @@ export default function StoreDetailPage() {
     if (!form) return null;
   } else {
     if (isLoading) return <div className="p-4">Carregando…</div>;
-    if (error || !store) return <div className="p-4 text-red-600">Erro ao carregar brechó.</div>;
+    if (error || !store) return <div className="p-4 text-red-600">{getErrorMessage(error, "Erro ao carregar brechó.")}</div>;
     if (!form) return null;
   }
 
@@ -379,7 +378,7 @@ export default function StoreDetailPage() {
       setFormMessage("Alterações salvas.");
     } catch (err) {
       console.error(err);
-      setFormError("Não foi possível salvar. Verifique os campos e tente novamente.");
+      setFormError(getErrorMessage(err, "Não foi possível salvar. Verifique os campos e tente novamente."));
     } finally {
       setSavingAll(false);
     }

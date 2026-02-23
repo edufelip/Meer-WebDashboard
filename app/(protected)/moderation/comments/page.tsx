@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { ContentComment, ModerationStats, PageResponse } from "@/types/index";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { GlassCard } from "@/components/dashboard/GlassCard";
@@ -53,7 +54,7 @@ export default function ModerationCommentsPage() {
       }
       qc.invalidateQueries({ queryKey: ["contents"] });
     },
-    onError: () => alert("Não foi possível apagar o comentário.")
+    onError: (error) => alert(getErrorMessage(error, "Não foi possível apagar o comentário."))
   });
 
   const submitSearch = () => {
@@ -158,7 +159,13 @@ export default function ModerationCommentsPage() {
           </thead>
           <tbody>
             {isLoading && <TableSkeletonRows colSpan={6} columns={6} />}
-            {error && <TableErrorRow colSpan={6} message="Erro ao carregar comentários" onRetry={() => refetch()} />}
+            {error && (
+              <TableErrorRow
+                colSpan={6}
+                message={getErrorMessage(error, "Erro ao carregar comentários")}
+                onRetry={() => refetch()}
+              />
+            )}
             {!isLoading && !error && items.length === 0 && (
               <EmptyStateRow colSpan={6} title="Nenhum comentário encontrado" description="Ajuste os filtros para ver mais resultados." />
             )}

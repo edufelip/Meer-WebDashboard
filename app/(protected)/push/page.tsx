@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import { isDevDomain, isLocalHost } from "@/lib/apiBase";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -132,8 +133,8 @@ export default function PushPage() {
         status: "success"
       });
     },
-    onError: (error: any) => {
-      const message = error?.message ?? "Falha ao enviar push.";
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Falha ao enviar push.");
       setErrorMessage(message);
       setStatusMessage(null);
       addHistory({
@@ -176,8 +177,8 @@ export default function PushPage() {
         status: "success"
       });
     },
-    onError: (error: any) => {
-      const message = error?.message ?? "Falha ao enviar push.";
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Falha ao enviar push.");
       setErrorMessage(message);
       setStatusMessage(null);
       addHistory({
@@ -222,8 +223,8 @@ export default function PushPage() {
         status: "success"
       });
     },
-    onError: (error: any) => {
-      const message = error?.message ?? "Falha ao enviar push.";
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, "Falha ao enviar push.");
       setErrorMessage(message);
       setStatusMessage(null);
       addHistory({

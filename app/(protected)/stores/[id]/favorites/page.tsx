@@ -7,19 +7,11 @@ import { useQuery } from "@tanstack/react-query";
 import { EmptyStateRow } from "@/components/dashboard/EmptyStateRow";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ApiError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { DashboardFavoriteUser, PageResponse } from "@/types/index";
 
 const PAGE_SIZE = 20;
-
-function getErrorMessage(error: unknown): string {
-  if (!(error instanceof ApiError)) return "Erro ao carregar usuários que favoritaram este brechó.";
-  const body = error.body as { message?: string } | undefined;
-  if (body?.message) return body.message;
-  if (error.status === 401) return "Sessão inválida. Faça login novamente.";
-  if (error.status === 403) return "Acesso negado. Esta rota exige admin.";
-  return "Erro ao carregar usuários que favoritaram este brechó.";
-}
 
 export default function StoreFavoritesUsersPage() {
   const params = useParams<{ id: string }>();
@@ -96,7 +88,7 @@ export default function StoreFavoritesUsersPage() {
               {error && (
                 <tr>
                   <td className="py-3 px-4 text-red-300" colSpan={6}>
-                    {getErrorMessage(error)}
+                    {getErrorMessage(error, "Erro ao carregar usuários que favoritaram este brechó.")}
                   </td>
                 </tr>
               )}

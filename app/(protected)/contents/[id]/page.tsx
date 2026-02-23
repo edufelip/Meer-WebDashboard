@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import { toStorageObjectUrl } from "@/lib/storage";
 import type { ContentComment, GuideContent, PageResponse } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
@@ -106,7 +107,7 @@ export default function ContentDetailPage() {
   const { mutateAsync: createContent, isPending: creating } = useMutation({
     mutationFn: (payload: any) => api.post<GuideContent>(`/contents`, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contents"] }),
-    onError: () => setErrorMsg("Não foi possível criar o conteúdo.")
+    onError: (error) => setErrorMsg(getErrorMessage(error, "Não foi possível criar o conteúdo."))
   });
 
   const { mutateAsync: updateContent, isPending: saving } = useMutation({
@@ -116,7 +117,7 @@ export default function ContentDetailPage() {
       await qc.invalidateQueries({ queryKey: ["content", target] });
       await qc.invalidateQueries({ queryKey: ["contents"] });
     },
-    onError: () => setErrorMsg("Não foi possível salvar o conteúdo.")
+    onError: (error) => setErrorMsg(getErrorMessage(error, "Não foi possível salvar o conteúdo."))
   });
 
   const handleDelete = () => {
@@ -124,7 +125,7 @@ export default function ContentDetailPage() {
     const confirmed = window.confirm("Deseja excluir este conteúdo?");
     if (!confirmed) return;
     deleteMutation.mutate(undefined, {
-      onError: () => alert("Não foi possível excluir o conteúdo.")
+      onError: (error) => alert(getErrorMessage(error, "Não foi possível excluir o conteúdo."))
     });
   };
 
@@ -132,7 +133,7 @@ export default function ContentDetailPage() {
     const confirmed = window.confirm("Deseja apagar este comentário?");
     if (!confirmed) return;
     deleteCommentMutation.mutate(commentId, {
-      onError: () => alert("Não foi possível apagar o comentário.")
+      onError: (error) => alert(getErrorMessage(error, "Não foi possível apagar o comentário."))
     });
   };
 
@@ -202,7 +203,7 @@ export default function ContentDetailPage() {
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg("Não foi possível salvar. Verifique os campos ou o upload.");
+      setErrorMsg(getErrorMessage(err, "Não foi possível salvar. Verifique os campos ou o upload."));
     }
   };
 
@@ -213,7 +214,7 @@ export default function ContentDetailPage() {
   }, [file, form.imageUrl]);
 
   if (!isCreate && isLoading) return <div className="p-4">Carregando…</div>;
-  if (!isCreate && (error || !data)) return <div className="p-4 text-red-600">Erro ao carregar conteúdo.</div>;
+  if (!isCreate && (error || !data)) return <div className="p-4 text-red-600">{getErrorMessage(error, "Erro ao carregar conteúdo.")}</div>;
 
   const commentItems = commentsData?.items ?? [];
   const likeCount = data?.likeCount ?? 0;
@@ -369,7 +370,7 @@ export default function ContentDetailPage() {
                 {commentsError && (
                   <tr>
                     <td className="py-3 px-4 text-red-300" colSpan={5}>
-                      Erro ao carregar comentários
+                      {getErrorMessage(commentsError, "Erro ao carregar comentários")}
                     </td>
                   </tr>
                 )}

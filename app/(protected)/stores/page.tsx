@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { ThriftStore, PageResponse } from "@/types/index";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -108,7 +109,7 @@ export default function StoresPage() {
             {error && (
               <tr>
                 <td className="py-3 px-4 text-red-300" colSpan={4}>
-                  Erro ao carregar brechós
+                  {getErrorMessage(error, "Erro ao carregar brechós")}
                 </td>
               </tr>
             )}

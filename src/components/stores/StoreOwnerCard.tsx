@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { api, ApiError } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import type { DashboardStoreDetailsResponse, StoreOwner } from "@/types/index";
 
@@ -66,7 +67,7 @@ export function StoreOwnerCard({ storeId, owner }: StoreOwnerCardProps) {
           return;
         }
       }
-      setOwnerTransferError("Não foi possível transferir propriedade. Tente novamente.");
+      setOwnerTransferError(getErrorMessage(err, "Não foi possível transferir propriedade. Tente novamente."));
     }
   };
 

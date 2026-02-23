@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { ModerationStats } from "@/types/index";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { GlassCard } from "@/components/dashboard/GlassCard";
@@ -65,7 +66,13 @@ export default function ModerationPage() {
           </thead>
           <tbody>
             {isLoading && <TableSkeletonRows colSpan={5} columns={5} />}
-            {error && <TableErrorRow colSpan={5} message="Erro ao carregar contatos" onRetry={() => refetch()} />}
+            {error && (
+              <TableErrorRow
+                colSpan={5}
+                message={getErrorMessage(error, "Erro ao carregar contatos")}
+                onRetry={() => refetch()}
+              />
+            )}
             {!isLoading && !error && items.length === 0 && (
               <EmptyStateRow colSpan={5} title="Nenhum contato encontrado" description="Ainda não há mensagens para revisar." />
             )}

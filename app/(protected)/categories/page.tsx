@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { EmptyStateRow } from "@/components/dashboard/EmptyStateRow";
@@ -62,7 +63,7 @@ export default function CategoriesPage() {
     const confirmed = window.confirm("Deseja apagar esta categoria?");
     if (!confirmed) return;
     deleteMutation.mutate(id, {
-      onError: () => alert("Não foi possível apagar a categoria.")
+      onError: (error) => alert(getErrorMessage(error, "Não foi possível apagar a categoria."))
     });
   };
 
@@ -164,7 +165,7 @@ export default function CategoriesPage() {
             {error && (
               <tr>
                 <td className="py-3 px-4 text-red-300" colSpan={4}>
-                  Erro ao carregar categorias
+                  {getErrorMessage(error, "Erro ao carregar categorias")}
                 </td>
               </tr>
             )}

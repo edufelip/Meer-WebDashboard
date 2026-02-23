@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { ImageModeration, ImageModerationStatus, ModerationPageResponse, ModerationStats } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -90,7 +91,7 @@ export default function ModerationImagesPage() {
       setSelected(null);
       setReviewNotes("");
     },
-    onError: () => alert("Não foi possível salvar a revisão.")
+    onError: (error) => alert(getErrorMessage(error, "Não foi possível salvar a revisão."))
   });
 
   const stats = statsQuery.data;
@@ -148,7 +149,9 @@ export default function ModerationImagesPage() {
           : null}
         {statsQuery.isError ? (
           <GlassCard className="flex flex-col gap-2 sm:col-span-2 lg:col-span-6">
-            <span className="text-sm text-white/80">Não foi possível carregar os indicadores.</span>
+            <span className="text-sm text-white/80">
+              {getErrorMessage(statsQuery.error, "Não foi possível carregar os indicadores.")}
+            </span>
             <button
               type="button"
               onClick={() => statsQuery.refetch()}
@@ -230,7 +233,11 @@ export default function ModerationImagesPage() {
             <tbody>
               {activeQuery.isLoading && <TableSkeletonRows colSpan={6} columns={6} columnSpans={[2, 1, 1, 1, 1]} />}
               {activeQuery.error && (
-                <TableErrorRow colSpan={6} message="Erro ao carregar imagens" onRetry={() => activeQuery.refetch()} />
+                <TableErrorRow
+                  colSpan={6}
+                  message={getErrorMessage(activeQuery.error, "Erro ao carregar imagens")}
+                  onRetry={() => activeQuery.refetch()}
+                />
               )}
               {activeTab === "flagged" && !flaggedQuery.isLoading && !flaggedQuery.error && flaggedItems.length === 0 && (
                 <EmptyStateRow colSpan={6} title="Nenhuma imagem sinalizada" description="Tudo certo por aqui." />

@@ -3,6 +3,7 @@ import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 
@@ -39,13 +40,13 @@ export default function ContactDetailPage() {
     const confirmed = window.confirm("Deseja apagar este contato?");
     if (confirmed) {
       deleteMutation.mutate(undefined, {
-        onError: () => alert("Não foi possível apagar o contato.")
+        onError: (error) => alert(getErrorMessage(error, "Não foi possível apagar o contato."))
       });
     }
   };
 
   if (isLoading) return <div className="p-4">Carregando…</div>;
-  if (error || !data) return <div className="p-4 text-red-600">Erro ao carregar contato.</div>;
+  if (error || !data) return <div className="p-4 text-red-600">{getErrorMessage(error, "Erro ao carregar contato.")}</div>;
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 pb-12 pt-6 sm:px-6 lg:px-10 text-textDark">

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { GuideContent, PageResponse } from "@/types/index";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -35,7 +36,7 @@ export default function ContentsPage() {
       await qc.invalidateQueries({ queryKey: ["contents"] });
       setSelectedIds(new Set());
     },
-    onError: () => alert("Ocorreu um erro ao excluir alguns conteúdos.")
+    onError: (error) => alert(getErrorMessage(error, "Ocorreu um erro ao excluir alguns conteúdos."))
   });
 
   const submitSearch = () => {
@@ -170,7 +171,7 @@ export default function ContentsPage() {
             {error && (
               <tr>
                 <td className="py-3 px-4 text-red-300" colSpan={7}>
-                  Erro ao carregar conteúdos
+                  {getErrorMessage(error, "Erro ao carregar conteúdos")}
                 </td>
               </tr>
             )}

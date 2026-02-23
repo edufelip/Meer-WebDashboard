@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errorMessages";
 import type { User, PageResponse } from "@/types/index";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -110,7 +111,7 @@ export default function UsersPage() {
             {error && (
               <tr>
                 <td className="py-3 px-4 text-red-300" colSpan={6}>
-                  Erro ao carregar usuários
+                  {getErrorMessage(error, "Erro ao carregar usuários")}
                 </td>
               </tr>
             )}
