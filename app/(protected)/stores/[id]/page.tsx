@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import clsx from "classnames";
 import { api } from "@/lib/api";
 import { getErrorMessage } from "@/lib/errorMessages";
+import { extractNeighborhoodFromMapboxFeature } from "@/lib/mapbox";
 import type { DashboardStoreDetailsResponse, ThriftStore } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -187,11 +188,11 @@ export default function StoreDetailPage() {
         const json = await res.json();
         const suggestions: AddressSuggestion[] = (json.features ?? []).map((f: any) => ({
           id: f.id,
-          label: f.text,
-          placeName: f.place_name,
+          label: f.text_pt ?? f.text,
+          placeName: f.place_name_pt ?? f.place_name,
           lat: f.center?.[1],
           lng: f.center?.[0],
-          neighborhood: extractNeighborhood(f)
+          neighborhood: extractNeighborhoodFromMapboxFeature(f)
         }));
         setAddressSuggestions(suggestions);
       } catch (err) {
@@ -687,14 +688,6 @@ function normalizeCategories(raw: string) {
     .map((c) => c.trim().toLowerCase())
     .filter(Boolean)
     .filter((value, index, self) => self.indexOf(value) === index);
-}
-
-function extractNeighborhood(feature: any): string | undefined {
-  if (!feature?.context) return undefined;
-  const ctx = feature.context as Array<{ id: string; text: string }>;
-  const neighborhood = ctx.find((c) => c.id?.startsWith("neighborhood"));
-  const place = ctx.find((c) => c.id?.startsWith("place"));
-  return neighborhood?.text || place?.text;
 }
 
 function arePhotosDirty(drafts: PhotoDraft[], deleted: (string | number)[], baseImages: ThriftStore["images"]): boolean {
