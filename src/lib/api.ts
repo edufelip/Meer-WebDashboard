@@ -1,5 +1,6 @@
 import { clearToken, getRefreshToken, getToken, setRefreshToken, setToken } from "./auth";
 import { selectApiBase } from "./apiBase";
+import { extractApiErrorBodyMessage, getStatusFallbackMessage } from "./errorMessages";
 
 // API base: prefer explicit backend URL; fallback to proxy /api.
 // Prefer same-origin proxy to avoid CORS in the browser; env URLs are fallbacks.
@@ -15,7 +16,9 @@ export class ApiError extends Error {
   body?: unknown;
 
   constructor(status: number, path: string, body?: unknown) {
-    super(`API error ${status}`);
+    const bodyMessage = extractApiErrorBodyMessage(body);
+    const statusFallback = getStatusFallbackMessage(status);
+    super(bodyMessage ?? statusFallback ?? `API error ${status}`);
     this.name = "ApiError";
     this.status = status;
     this.path = path;
