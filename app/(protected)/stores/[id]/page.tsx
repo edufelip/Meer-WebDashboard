@@ -8,6 +8,7 @@ import clsx from "classnames";
 import { api } from "@/lib/api";
 import { getErrorMessage } from "@/lib/errorMessages";
 import { extractNeighborhoodFromMapboxFeature } from "@/lib/mapbox";
+import { formatStoreAddress, resolveComplementPayload } from "@/lib/storeAddress";
 import type { DashboardStoreDetailsResponse, ThriftStore } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -19,6 +20,7 @@ type StoreFormState = {
   description: string;
   openingHours: string;
   addressLine: string;
+  complement: string;
   neighborhood: string;
   isOnlineStore: boolean;
   phone: string;
@@ -53,6 +55,7 @@ const emptyFormState: StoreFormState = {
   description: "",
   openingHours: "",
   addressLine: "",
+  complement: "",
   neighborhood: "",
   isOnlineStore: false,
   phone: "",
@@ -104,6 +107,7 @@ export default function StoreDetailPage() {
     enabled: Boolean(storeId) && !isCreate
   });
   const store = data?.store;
+  const storeAddress = formatStoreAddress(store);
   const owner = data?.owner ?? null;
   const favoriteUserCount = data?.favoriteUserCount ?? 0;
 
@@ -140,6 +144,7 @@ export default function StoreDetailPage() {
       description: store.description ?? "",
       openingHours: store.openingHours ?? "",
       addressLine: store.addressLine ?? "",
+      complement: store.complement ?? "",
       neighborhood: store.neighborhood ?? "",
       isOnlineStore: Boolean(store.isOnlineStore),
       phone: store.phone ?? "",
@@ -268,13 +273,23 @@ export default function StoreDetailPage() {
       changes++;
     }
 
-    const applyField = (key: Exclude<keyof StoreFormState, "isOnlineStore">, currentVal: any) => {
+    const applyField = (key: Exclude<keyof StoreFormState, "isOnlineStore" | "complement">, currentVal: any) => {
       const next = nullable(form[key]);
       if (safeCompare(next) !== safeCompare(currentVal)) {
         payload[key] = next;
         changes++;
       }
     };
+
+    const complementPayload = resolveComplementPayload({
+      isCreate,
+      formComplement: form.complement,
+      currentComplement: current?.complement
+    });
+    if (complementPayload.include) {
+      payload.complement = complementPayload.value;
+      changes++;
+    }
 
     if (isCreate && form.description.trim() === "") {
       setFormError("A descrição é obrigatória.");
@@ -458,7 +473,7 @@ export default function StoreDetailPage() {
         subtitle={
           isCreate
             ? "Preencha os dados para criar um novo brechó."
-            : store?.description || store?.addressLine || "Detalhes do brechó"
+            : store?.description || storeAddress || "Detalhes do brechó"
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -559,6 +574,13 @@ export default function StoreDetailPage() {
                   }}
                 />
               </div>
+              <LabeledInput
+                label="Complement (optional)"
+                value={form.complement}
+                onChange={(v) => setForm({ ...form, complement: v })}
+                placeholder="Apt 302"
+                maxLength={255}
+              />
               <div>
                 <label className="flex items-center gap-2 text-sm text-white/90">
                   <input

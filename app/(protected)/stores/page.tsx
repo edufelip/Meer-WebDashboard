@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { getErrorMessage } from "@/lib/errorMessages";
+import { formatStoreAddress } from "@/lib/storeAddress";
 import type { ThriftStore, PageResponse } from "@/types/index";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -124,7 +125,7 @@ export default function StoresPage() {
                     {s.name}
                   </Link>
                 </td>
-                <td className="py-3 px-4 text-white/90">{s.addressLine ?? "-"}</td>
+                <td className="py-3 px-4 text-white/90">{formatStoreAddress(s) ?? "-"}</td>
                 <td className="py-3 px-4 text-white/70">
                   {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "-"}
                 </td>

@@ -2,6 +2,7 @@ export type ThriftStore = {
   id: string;
   name: string;
   addressLine?: string;
+  complement?: string | null;
   description?: string;
   coverImageUrl?: string;
   isOnlineStore?: boolean;
