@@ -14,6 +14,7 @@ export type ThriftStore = {
   }>;
   neighborhood?: string;
   badgeLabel?: string | null;
+  badges?: string[];
   rating?: number | null;
   reviewCount?: number | null;
   isFavorite?: boolean | null;

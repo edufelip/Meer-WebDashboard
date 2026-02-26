@@ -12,6 +12,7 @@ import { formatStoreAddress, resolveComplementPayload } from "@/lib/storeAddress
 import type { DashboardStoreDetailsResponse, ThriftStore } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { StoreBadgesCard } from "@/components/stores/StoreBadgesCard";
 import { StoreOwnerCard } from "@/components/stores/StoreOwnerCard";
 import { StorePhotosCard } from "@/components/stores/StorePhotosCard";
 
@@ -670,6 +671,8 @@ export default function StoreDetailPage() {
               </div>
             </GlassCard>
           ) : null}
+
+          {!isCreate ? <StoreBadgesCard storeId={storeId} badges={store?.badges ?? []} /> : null}
 
           {!isCreate ? <StoreOwnerCard storeId={storeId} owner={owner} /> : null}
 
