@@ -85,6 +85,14 @@ export type ContentComment = {
   thriftStoreName?: string;
 };
 
+export type ContentLike = {
+  id: string;
+  userId: string;
+  userDisplayName?: string | null;
+  userPhotoUrl?: string | null;
+  createdAt?: string;
+};
+
 export type PushToken = {
   id: string;
   deviceId: string;

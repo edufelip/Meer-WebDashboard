@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { api } from "@/lib/api";
@@ -227,13 +228,21 @@ export default function ContentDetailPage() {
         subtitle={isCreate ? "Crie um novo conteúdo" : data?.thriftStoreName ?? data?.thriftStoreId}
         actions={
           !isCreate ? (
-            <button
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-              className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
-            >
-              {deleteMutation.isPending ? "Excluindo…" : "Excluir"}
-            </button>
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/contents/${contentId}/likes`}
+                className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-brand-forest shadow-sm transition-colors hover:bg-white/90"
+              >
+                Ver curtidas
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+                className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "Excluindo…" : "Excluir"}
+              </button>
+            </div>
           ) : null
         }
       />
