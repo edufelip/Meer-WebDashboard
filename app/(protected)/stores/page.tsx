@@ -18,22 +18,33 @@ import { GlassCard } from "@/components/dashboard/GlassCard";
 import { EmptyStateRow } from "@/components/dashboard/EmptyStateRow";
 
 type StoreBadgeFilter = "ALL" | StoreBadgeCode;
+type StoreListMode = "ALL" | "ONLINE_ONLY";
+type StoreSort = "newest" | "oldest" | "name_asc" | "name_desc";
+const PAGE_SIZE = 20;
 
 export default function StoresPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [sort, setSort] = useState<StoreSort>("newest");
   const [badgeFilter, setBadgeFilter] = useState<StoreBadgeFilter>("ALL");
+  const [storeListMode, setStoreListMode] = useState<StoreListMode>("ALL");
+  const isOnlineOnly = storeListMode === "ONLINE_ONLY";
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["stores", page, search, sort, badgeFilter],
+    queryKey: ["stores", storeListMode, page, search, sort, badgeFilter],
     queryFn: () =>
-      api.get<PageResponse<ThriftStore>>(
-        `/dashboard/stores?page=${page}&pageSize=20&sort=${sort}${search ? `&search=${encodeURIComponent(search)}` : ""}${
-          badgeFilter !== "ALL" ? `&badge=${encodeURIComponent(badgeFilter)}` : ""
-        }`
-      )
+      isOnlineOnly
+        ? api.get<PageResponse<ThriftStore>>(
+            `/dashboard/stores/online?page=${page}&pageSize=${PAGE_SIZE}&sort=${sort}${
+              search ? `&search=${encodeURIComponent(search)}` : ""
+            }${badgeFilter !== "ALL" ? `&badge=${encodeURIComponent(badgeFilter)}` : ""}`
+          )
+        : api.get<PageResponse<ThriftStore>>(
+            `/dashboard/stores?page=${page}&pageSize=${PAGE_SIZE}&sort=${sort}${
+              search ? `&search=${encodeURIComponent(search)}` : ""
+            }${badgeFilter !== "ALL" ? `&badge=${encodeURIComponent(badgeFilter)}` : ""}`
+          )
   });
 
   const items = data?.items ?? [];
@@ -71,8 +82,25 @@ export default function StoresPage() {
               spellCheck={false}
               aria-label="Buscar brechós"
               className="w-full sm:w-64 rounded-2xl border border-black/10 bg-white/80 px-4 py-2.5 text-sm text-textDark shadow-sm placeholder:text-textSubtle/70 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
-              placeholder="Buscar por nome, endereço ou dono…"
+              placeholder={isOnlineOnly ? "Buscar por nome ou descrição…" : "Buscar por nome, endereço ou dono…"}
             />
+            <select
+              value={storeListMode}
+              onChange={(e) => {
+                setPage(0);
+                setStoreListMode(e.target.value as StoreListMode);
+              }}
+              name="store-mode"
+              aria-label="Filtrar tipo de brechó"
+              className="rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm text-textDark shadow-sm focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+            >
+              <option className="text-black" value="ALL">
+                Todos os brechós
+              </option>
+              <option className="text-black" value="ONLINE_ONLY">
+                Apenas online
+              </option>
+            </select>
             <select
               value={badgeFilter}
               onChange={(e) => {
@@ -94,7 +122,7 @@ export default function StoresPage() {
               value={sort}
               onChange={(e) => {
                 setPage(0);
-                setSort(e.target.value as "newest" | "oldest");
+                setSort(e.target.value as StoreSort);
               }}
               name="store-sort"
               aria-label="Ordenar brechós"
@@ -105,6 +133,12 @@ export default function StoresPage() {
               </option>
               <option className="text-black" value="oldest">
                 Mais antigos
+              </option>
+              <option className="text-black" value="name_asc">
+                Nome (A-Z)
+              </option>
+              <option className="text-black" value="name_desc">
+                Nome (Z-A)
               </option>
             </select>
             <button
@@ -157,7 +191,7 @@ export default function StoresPage() {
                       {s.name}
                     </Link>
                   </td>
-                  <td className="py-3 px-4 text-white/90">{formatStoreAddress(s) ?? "-"}</td>
+                  <td className="py-3 px-4 text-white/90">{formatStoreAddress(s) ?? (s.isOnlineStore ? "Loja online" : "-")}</td>
                   <td className="py-3 px-4">
                     {badges.length > 0 ? (
                       <div className="flex flex-wrap gap-2">

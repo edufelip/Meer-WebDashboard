@@ -1,43 +1,125 @@
-import { formatStoreAddress, resolveComplementPayload } from "@/lib/storeAddress";
+import { buildStoreAddressPayload, formatStoreAddress } from "@/lib/storeAddress";
 
-describe("resolveComplementPayload", () => {
-  it("includes complement on create when provided", () => {
+describe("buildStoreAddressPayload", () => {
+  it("keeps address fields for a physical store", () => {
     expect(
-      resolveComplementPayload({
+      buildStoreAddressPayload({
         isCreate: true,
-        formComplement: "Suite 12"
-      })
-    ).toEqual({ include: true, value: "Suite 12" });
-  });
-
-  it("includes updated complement on edit", () => {
-    expect(
-      resolveComplementPayload({
-        isCreate: false,
+        isOnlineStore: false,
+        formAddressLine: "Av. Paulista, 1000",
         formComplement: "Apt 302",
-        currentComplement: "Suite 12"
+        formNeighborhood: "Bela Vista",
+        formLatitude: "-23.561684",
+        formLongitude: "-46.656139"
       })
-    ).toEqual({ include: true, value: "Apt 302" });
+    ).toEqual({
+      payload: {
+        addressLine: "Av. Paulista, 1000",
+        complement: "Apt 302",
+        neighborhood: "Bela Vista",
+        latitude: -23.561684,
+        longitude: -46.656139
+      },
+      hasChanges: true,
+      hasAddress: true,
+      hasCoordinates: true,
+      addressChanged: true,
+      isCleared: false
+    });
   });
 
-  it("includes empty string to clear complement on edit", () => {
+  it("clears address fields for an online-only store on create", () => {
     expect(
-      resolveComplementPayload({
-        isCreate: false,
+      buildStoreAddressPayload({
+        isCreate: true,
+        isOnlineStore: true,
+        formAddressLine: "",
         formComplement: "",
-        currentComplement: "Apt 302"
+        formNeighborhood: "",
+        formLatitude: "",
+        formLongitude: ""
       })
-    ).toEqual({ include: true, value: "" });
+    ).toEqual({
+      payload: {
+        addressLine: null,
+        complement: null,
+        neighborhood: null,
+        latitude: null,
+        longitude: null
+      },
+      hasChanges: true,
+      hasAddress: false,
+      hasCoordinates: false,
+      addressChanged: false,
+      isCleared: true
+    });
   });
 
-  it("omits complement when unchanged or missing in old payloads", () => {
+  it("clears persisted address fields when editing a store to online-only", () => {
     expect(
-      resolveComplementPayload({
+      buildStoreAddressPayload({
         isCreate: false,
+        isOnlineStore: true,
+        formAddressLine: "",
         formComplement: "",
-        currentComplement: undefined
+        formNeighborhood: "",
+        formLatitude: "",
+        formLongitude: "",
+        current: {
+          addressLine: "Av. Paulista, 1000",
+          complement: "Apt 302",
+          neighborhood: "Bela Vista",
+          latitude: -23.561684,
+          longitude: -46.656139
+        }
       })
-    ).toEqual({ include: false });
+    ).toEqual({
+      payload: {
+        addressLine: null,
+        complement: null,
+        neighborhood: null,
+        latitude: null,
+        longitude: null
+      },
+      hasChanges: true,
+      hasAddress: false,
+      hasCoordinates: false,
+      addressChanged: true,
+      isCleared: true
+    });
+  });
+
+  it("clears neighborhood and coordinates when the address is manually removed", () => {
+    expect(
+      buildStoreAddressPayload({
+        isCreate: false,
+        isOnlineStore: false,
+        formAddressLine: "",
+        formComplement: "",
+        formNeighborhood: "",
+        formLatitude: "",
+        formLongitude: "",
+        current: {
+          addressLine: "Av. Paulista, 1000",
+          complement: null,
+          neighborhood: "Bela Vista",
+          latitude: -23.561684,
+          longitude: -46.656139
+        }
+      })
+    ).toEqual({
+      payload: {
+        addressLine: null,
+        neighborhood: null,
+        latitude: null,
+        longitude: null
+      },
+      hasChanges: true,
+      hasAddress: false,
+      hasCoordinates: false,
+      addressChanged: true,
+      isCleared: true
+    });
   });
 });
 

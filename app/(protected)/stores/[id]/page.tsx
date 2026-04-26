@@ -8,7 +8,7 @@ import clsx from "classnames";
 import { api } from "@/lib/api";
 import { getErrorMessage } from "@/lib/errorMessages";
 import { extractNeighborhoodFromMapboxFeature } from "@/lib/mapbox";
-import { formatStoreAddress, resolveComplementPayload } from "@/lib/storeAddress";
+import { buildStoreAddressPayload, formatStoreAddress } from "@/lib/storeAddress";
 import type { DashboardStoreDetailsResponse, ThriftStore } from "@/types/index";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -264,17 +264,36 @@ export default function StoreDetailPage() {
       changes++;
     }
 
-    const addressLine = form.addressLine.trim();
-    if (addressLine === "") {
+    const addressResult = buildStoreAddressPayload({
+      isCreate,
+      isOnlineStore: Boolean(form.isOnlineStore),
+      formAddressLine: form.addressLine,
+      formComplement: form.complement,
+      formNeighborhood: form.neighborhood,
+      formLatitude: form.latitude,
+      formLongitude: form.longitude,
+      current: current
+        ? {
+            addressLine: current.addressLine,
+            complement: current.complement,
+            neighborhood: current.neighborhood,
+            latitude: current.latitude,
+            longitude: current.longitude
+          }
+        : null
+    });
+
+    if (addressResult.error) {
+      setFormError(addressResult.error);
+      return;
+    }
+
+    if (!form.isOnlineStore && !addressResult.hasAddress) {
       setFormError("O endereço não pode ficar em branco.");
       return;
     }
-    if (addressLine !== (current?.addressLine ?? "")) {
-      payload.addressLine = addressLine === "" ? null : addressLine;
-      changes++;
-    }
 
-    const applyField = (key: Exclude<keyof StoreFormState, "isOnlineStore" | "complement">, currentVal: any) => {
+    const applyField = (key: Exclude<keyof StoreFormState, "isOnlineStore" | "addressLine" | "complement" | "neighborhood" | "latitude" | "longitude">, currentVal: any) => {
       const next = nullable(form[key]);
       if (safeCompare(next) !== safeCompare(currentVal)) {
         payload[key] = next;
@@ -282,23 +301,12 @@ export default function StoreDetailPage() {
       }
     };
 
-    const complementPayload = resolveComplementPayload({
-      isCreate,
-      formComplement: form.complement,
-      currentComplement: current?.complement
-    });
-    if (complementPayload.include) {
-      payload.complement = complementPayload.value;
-      changes++;
-    }
-
     if (isCreate && form.description.trim() === "") {
       setFormError("A descrição é obrigatória.");
       return;
     }
     applyField("description", current?.description);
     applyField("openingHours", current?.openingHours);
-    applyField("neighborhood", current?.neighborhood);
     const nextOnline = Boolean(form.isOnlineStore);
     if (nextOnline !== Boolean(current?.isOnlineStore)) {
       payload.isOnlineStore = nextOnline;
@@ -322,37 +330,19 @@ export default function StoreDetailPage() {
       changes++;
     }
 
-    const latText = form.latitude.trim();
-    const lngText = form.longitude.trim();
-    const hasLat = latText !== "";
-    const hasLng = lngText !== "";
-
-    const addressChanged = addressLine !== (current?.addressLine ?? "");
-    if (addressChanged && (!hasLat || !hasLng)) {
+    if (!form.isOnlineStore && addressResult.addressChanged && !addressResult.hasCoordinates) {
       setFormError("Selecione uma sugestão para preencher latitude e longitude ao alterar o endereço.");
       return;
     }
 
-    if (hasLat !== hasLng) {
-      setFormError("Latitude e longitude devem ser enviadas juntas.");
+    if (!form.isOnlineStore && isCreate && !addressResult.hasCoordinates) {
+      setFormError("Latitude e longitude são obrigatórias.");
       return;
     }
 
-    if (hasLat && hasLng) {
-      const latNum = Number(latText);
-      const lngNum = Number(lngText);
-      if (Number.isNaN(latNum) || Number.isNaN(lngNum)) {
-        setFormError("Latitude e longitude devem ser números.");
-        return;
-      }
-      if (latNum !== current?.latitude || lngNum !== current?.longitude) {
-        payload.latitude = latNum;
-        payload.longitude = lngNum;
-        changes++;
-      }
-    } else if (isCreate) {
-      setFormError("Latitude e longitude são obrigatórias.");
-      return;
+    if (addressResult.hasChanges) {
+      Object.assign(payload, addressResult.payload);
+      changes += Object.keys(addressResult.payload).length;
     }
 
     const baseImages = isCreate ? [] : (store?.images ?? []);
@@ -474,7 +464,7 @@ export default function StoreDetailPage() {
         subtitle={
           isCreate
             ? "Preencha os dados para criar um novo brechó."
-            : store?.description || storeAddress || "Detalhes do brechó"
+            : store?.description || storeAddress || (store?.isOnlineStore ? "Loja online" : "Detalhes do brechó")
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -506,7 +496,7 @@ export default function StoreDetailPage() {
               <div>
                 <p className="text-lg font-semibold text-white">Editar informações básicas</p>
                 <p className="text-sm text-white/80">
-                  Atualize dados do brechó. Nome e endereço não podem ser vazios.
+                  Atualize os dados do brechó. Lojas físicas exigem endereço; lojas online podem ficar sem endereço.
                 </p>
               </div>
               <button
@@ -537,51 +527,6 @@ export default function StoreDetailPage() {
                 placeholder="Ex: Seg-Sáb 10h-18h…"
                 maxLength={256}
               />
-              <div className="relative">
-                <LabeledInput
-                  label="Endereço *"
-                  value={form.addressLine}
-                  onChange={(v) => {
-                    setAddressShouldFetch(true);
-                    setAddressQuery(v);
-                    setForm({
-                      ...form,
-                      addressLine: v,
-                      neighborhood: "",
-                      latitude: "",
-                      longitude: ""
-                    });
-                  }}
-                  placeholder="Rua, número, cidade…"
-                  maxLength={512}
-                />
-                <AddressSuggestions
-                  loading={addressLoading}
-                  error={addressError}
-                  suggestions={addressSuggestions}
-                  onSelect={(s) => {
-                    setForm({
-                      ...form,
-                      addressLine: s.placeName,
-                      neighborhood: s.neighborhood ?? "",
-                      latitude: s.lat != null ? String(s.lat) : "",
-                      longitude: s.lng != null ? String(s.lng) : ""
-                    });
-                    setAddressSuggestions([]);
-                    setAddressError(null);
-                    setFormMessage("Endereço atualizado a partir da sugestão.");
-                    setAddressShouldFetch(false);
-                    setAddressQuery("");
-                  }}
-                />
-              </div>
-              <LabeledInput
-                label="Complement (optional)"
-                value={form.complement}
-                onChange={(v) => setForm({ ...form, complement: v })}
-                placeholder="Apt 302"
-                maxLength={255}
-              />
               <div>
                 <label className="flex items-center gap-2 text-sm text-white/90">
                   <input
@@ -589,16 +534,71 @@ export default function StoreDetailPage() {
                     name="store-online"
                     className="h-4 w-4 rounded border-white/20 bg-white/10 text-brand-primary focus:ring-brand-primary"
                     checked={form.isOnlineStore}
-                    onChange={(event) => setForm({ ...form, isOnlineStore: event.target.checked })}
+                    onChange={(event) => {
+                      const nextOnline = event.target.checked;
+                      setAddressSuggestions([]);
+                      setAddressError(null);
+                      setAddressShouldFetch(false);
+                      setAddressQuery("");
+                      setForm(nextOnline ? clearAddressFields({ ...form, isOnlineStore: nextOnline }) : { ...form, isOnlineStore: nextOnline });
+                    }}
                   />
                   Loja online
                 </label>
                 <p className="mt-2 text-xs text-white/60">
-                  Mesmo sendo loja online, é necessário informar um endereço. Para lojas online, exibimos apenas a cidade
-                  e o bairro para os usuários.
+                  Ative para lojas sem endereço físico. Nesse modo, o formulário limpa os campos de endereço antes do envio.
                 </p>
               </div>
-              <LabeledInput label="Bairro" value={form.neighborhood} readOnly disabled maxLength={120} />
+              {!form.isOnlineStore ? (
+                <>
+                  <div className="relative">
+                    <LabeledInput
+                      label="Endereço *"
+                      value={form.addressLine}
+                      onChange={(v) => {
+                        setAddressShouldFetch(true);
+                        setAddressQuery(v);
+                        setForm({
+                          ...form,
+                          addressLine: v,
+                          neighborhood: "",
+                          latitude: "",
+                          longitude: ""
+                        });
+                      }}
+                      placeholder="Rua, número, cidade…"
+                      maxLength={512}
+                    />
+                    <AddressSuggestions
+                      loading={addressLoading}
+                      error={addressError}
+                      suggestions={addressSuggestions}
+                      onSelect={(s) => {
+                        setForm({
+                          ...form,
+                          addressLine: s.placeName,
+                          neighborhood: s.neighborhood ?? "",
+                          latitude: s.lat != null ? String(s.lat) : "",
+                          longitude: s.lng != null ? String(s.lng) : ""
+                        });
+                        setAddressSuggestions([]);
+                        setAddressError(null);
+                        setFormMessage("Endereço atualizado a partir da sugestão.");
+                        setAddressShouldFetch(false);
+                        setAddressQuery("");
+                      }}
+                    />
+                  </div>
+                  <LabeledInput
+                    label="Complemento (opcional)"
+                    value={form.complement}
+                    onChange={(v) => setForm({ ...form, complement: v })}
+                    placeholder="Apt 302"
+                    maxLength={255}
+                  />
+                  <LabeledInput label="Bairro" value={form.neighborhood} readOnly disabled maxLength={120} />
+                </>
+              ) : null}
               <LabeledInput
                 label="Telefone (opcional)"
                 value={form.phone}
@@ -629,26 +629,28 @@ export default function StoreDetailPage() {
                 <LabeledInput
                   label="Categorias (separadas por vírgula)"
                   value={form.categories}
-                  onChange={(v) => setForm({ ...form, categories: v })}
-                  placeholder="vintage, jeans, acessórios…"
-                  maxLength={512}
-                />
-              <div className="grid grid-cols-2 gap-3">
-                <LabeledInput
-                  label="Latitude"
-                  value={form.latitude}
-                  placeholder="-23.55…"
-                  readOnly
-                  disabled
-                />
-                <LabeledInput
-                  label="Longitude"
-                  value={form.longitude}
-                  placeholder="-46.63…"
-                  readOnly
-                  disabled
-                />
-              </div>
+                onChange={(v) => setForm({ ...form, categories: v })}
+                placeholder="vintage, jeans, acessórios…"
+                maxLength={512}
+              />
+              {!form.isOnlineStore ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <LabeledInput
+                    label="Latitude"
+                    value={form.latitude}
+                    placeholder="-23.55…"
+                    readOnly
+                    disabled
+                  />
+                  <LabeledInput
+                    label="Longitude"
+                    value={form.longitude}
+                    placeholder="-46.63…"
+                    readOnly
+                    disabled
+                  />
+                </div>
+              ) : null}
             </div>
           </GlassCard>
 
@@ -705,6 +707,19 @@ function buildPhotoDrafts(store: ThriftStore): PhotoDraft[] {
     url: img.url,
     fileKey: undefined
   }));
+}
+
+function clearAddressFields<T extends Pick<StoreFormState, "addressLine" | "complement" | "neighborhood" | "latitude" | "longitude">>(
+  form: T
+): T {
+  return {
+    ...form,
+    addressLine: "",
+    complement: "",
+    neighborhood: "",
+    latitude: "",
+    longitude: ""
+  };
 }
 
 function normalizeCategories(raw: string) {

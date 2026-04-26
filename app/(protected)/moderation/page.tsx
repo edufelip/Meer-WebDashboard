@@ -109,7 +109,7 @@ export default function ModerationPage() {
           Anterior
         </button>
         <div className="font-medium text-textSubtle">
-          Página {data ? data.page : page + 1} {data?.hasNext ? "" : "(última)"}
+          Página {page + 1} {data?.hasNext ? "" : "(última)"}
         </div>
         <button
           disabled={!data?.hasNext}
