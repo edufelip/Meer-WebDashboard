@@ -9,6 +9,12 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { EmptyStateRow } from "@/components/dashboard/EmptyStateRow";
 
+type UsersPageResponse = PageResponse<User> & {
+  total: number;
+};
+
+const totalFormatter = new Intl.NumberFormat("pt-BR");
+
 export default function UsersPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
@@ -18,12 +24,17 @@ export default function UsersPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["users", page, search, sort],
     queryFn: () =>
-      api.get<PageResponse<User>>(
+      api.get<UsersPageResponse>(
         `/dashboard/users?page=${page}&pageSize=20&sort=${sort}${search ? `&q=${encodeURIComponent(search)}` : ""}`
       )
   });
 
   const items = data?.items ?? [];
+  const totalUsersText = isLoading
+    ? "Carregando total de usuários..."
+    : typeof data?.total === "number"
+      ? `Total de usuários: ${totalFormatter.format(data.total)}`
+      : "Total de usuários: -";
 
   const submitSearch = () => {
     setPage(0);
@@ -86,6 +97,13 @@ export default function UsersPage() {
           </div>
         }
       />
+
+      <p
+        className="w-fit rounded-2xl border border-black/10 bg-white/80 px-4 py-2 text-sm font-semibold text-textDark shadow-sm"
+        aria-live="polite"
+      >
+        {totalUsersText}
+      </p>
 
       <GlassCard className="overflow-hidden">
         <div className="overflow-x-auto">
