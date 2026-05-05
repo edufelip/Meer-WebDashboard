@@ -21,6 +21,11 @@ type StoreBadgeFilter = "ALL" | StoreBadgeCode;
 type StoreListMode = "ALL" | "ONLINE_ONLY";
 type StoreSort = "newest" | "oldest" | "name_asc" | "name_desc";
 const PAGE_SIZE = 20;
+const ALL_CITIES = "ALL";
+
+type StoreCitiesResponse = {
+  items: string[];
+};
 
 export default function StoresPage() {
   const [page, setPage] = useState(0);
@@ -28,26 +33,29 @@ export default function StoresPage() {
   const [searchInput, setSearchInput] = useState("");
   const [sort, setSort] = useState<StoreSort>("newest");
   const [badgeFilter, setBadgeFilter] = useState<StoreBadgeFilter>("ALL");
+  const [cityFilter, setCityFilter] = useState<string>(ALL_CITIES);
   const [storeListMode, setStoreListMode] = useState<StoreListMode>("ALL");
   const isOnlineOnly = storeListMode === "ONLINE_ONLY";
 
+  const { data: citiesData, error: citiesError } = useQuery({
+    queryKey: ["store-cities"],
+    queryFn: () => api.get<StoreCitiesResponse>("/dashboard/stores/cities"),
+    enabled: !isOnlineOnly
+  });
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["stores", storeListMode, page, search, sort, badgeFilter],
+    queryKey: ["stores", storeListMode, page, search, sort, badgeFilter, cityFilter],
     queryFn: () =>
       isOnlineOnly
-        ? api.get<PageResponse<ThriftStore>>(
-            `/dashboard/stores/online?page=${page}&pageSize=${PAGE_SIZE}&sort=${sort}${
-              search ? `&search=${encodeURIComponent(search)}` : ""
-            }${badgeFilter !== "ALL" ? `&badge=${encodeURIComponent(badgeFilter)}` : ""}`
-          )
+        ? api.get<PageResponse<ThriftStore>>(buildStoreListPath("/dashboard/stores/online", { page, sort, search, badgeFilter }))
         : api.get<PageResponse<ThriftStore>>(
-            `/dashboard/stores?page=${page}&pageSize=${PAGE_SIZE}&sort=${sort}${
-              search ? `&search=${encodeURIComponent(search)}` : ""
-            }${badgeFilter !== "ALL" ? `&badge=${encodeURIComponent(badgeFilter)}` : ""}`
+            buildStoreListPath("/dashboard/stores", { page, sort, search, badgeFilter, cityFilter })
           )
   });
 
   const items = data?.items ?? [];
+  const cityOptions = Array.isArray(citiesData?.items) ? citiesData.items : [];
+  const cityFilterDisabled = isOnlineOnly || (cityOptions.length === 0 && Boolean(citiesError));
 
   const submitSearch = () => {
     setPage(0);
@@ -87,8 +95,12 @@ export default function StoresPage() {
             <select
               value={storeListMode}
               onChange={(e) => {
+                const nextMode = e.target.value as StoreListMode;
                 setPage(0);
-                setStoreListMode(e.target.value as StoreListMode);
+                if (nextMode === "ONLINE_ONLY") {
+                  setCityFilter(ALL_CITIES);
+                }
+                setStoreListMode(nextMode);
               }}
               name="store-mode"
               aria-label="Filtrar tipo de brechó"
@@ -100,6 +112,28 @@ export default function StoresPage() {
               <option className="text-black" value="ONLINE_ONLY">
                 Apenas online
               </option>
+            </select>
+            <select
+              value={cityFilter}
+              onChange={(e) => {
+                setPage(0);
+                setCityFilter(e.target.value);
+              }}
+              name="store-city-filter"
+              aria-label="Filtrar por cidade"
+              disabled={cityFilterDisabled}
+              className="rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm text-textDark shadow-sm disabled:cursor-not-allowed disabled:opacity-60 focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40"
+            >
+              <option className="text-black" value={ALL_CITIES}>
+                Todas as cidades
+              </option>
+              {!cityFilterDisabled
+                ? cityOptions.map((city) => (
+                    <option key={city} className="text-black" value={city}>
+                      {city}
+                    </option>
+                  ))
+                : null}
             </select>
             <select
               value={badgeFilter}
@@ -250,4 +284,37 @@ function StoreBadgeChip({ badgeCode }: { badgeCode: string }) {
       {getStoreBadgeLabel(badgeCode)}
     </span>
   );
+}
+
+function buildStoreListPath(
+  basePath: string,
+  {
+    page,
+    sort,
+    search,
+    badgeFilter,
+    cityFilter
+  }: {
+    page: number;
+    sort: StoreSort;
+    search: string;
+    badgeFilter: StoreBadgeFilter;
+    cityFilter?: string;
+  }
+) {
+  const params = [`page=${page}`, `pageSize=${PAGE_SIZE}`, `sort=${encodeURIComponent(sort)}`];
+
+  if (search) {
+    params.push(`search=${encodeURIComponent(search)}`);
+  }
+
+  if (badgeFilter !== "ALL") {
+    params.push(`badge=${encodeURIComponent(badgeFilter)}`);
+  }
+
+  if (cityFilter && cityFilter !== ALL_CITIES) {
+    params.push(`city=${encodeURIComponent(cityFilter)}`);
+  }
+
+  return `${basePath}?${params.join("&")}`;
 }

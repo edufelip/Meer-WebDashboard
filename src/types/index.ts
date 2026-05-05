@@ -1,6 +1,7 @@
 export type ThriftStore = {
   id: string;
   name: string;
+  city?: string | null;
   addressLine?: string;
   complement?: string | null;
   description?: string;
