@@ -192,6 +192,7 @@ export default function StoresPage() {
             <tr className="text-xs uppercase tracking-wide text-white/60">
               <th className="py-3 px-4">ID</th>
               <th className="py-3 px-4">Nome</th>
+              <th className="py-3 px-4">Dono</th>
               <th className="py-3 px-4">Endereço</th>
               <th className="py-3 px-4">Badges</th>
               <th className="py-3 px-4">Criado em</th>
@@ -200,20 +201,20 @@ export default function StoresPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td className="py-3 px-4" colSpan={5}>
+                <td className="py-3 px-4" colSpan={6}>
                   Carregando…
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td className="py-3 px-4 text-red-300" colSpan={5}>
+                <td className="py-3 px-4 text-red-300" colSpan={6}>
                   {getErrorMessage(error, "Erro ao carregar brechós")}
                 </td>
               </tr>
             )}
             {!isLoading && !error && items.length === 0 && (
-              <EmptyStateRow colSpan={5} title="Nenhum brechó encontrado" description="Tente ajustar o termo de busca." />
+              <EmptyStateRow colSpan={6} title="Nenhum brechó encontrado" description="Tente ajustar o termo de busca." />
             )}
             {items.map((s) => {
               const badges = normalizeStoreBadges(s.badges);
@@ -224,6 +225,15 @@ export default function StoresPage() {
                     <Link href={`/stores/${s.id}`} className="text-brand-primary hover:underline">
                       {s.name}
                     </Link>
+                  </td>
+                  <td className="py-3 px-4">
+                    {s.ownerId && s.ownerName ? (
+                      <Link href={`/users/${s.ownerId}`} className="text-brand-primary hover:underline">
+                        {s.ownerName}
+                      </Link>
+                    ) : (
+                      <span className="text-white/60">—</span>
+                    )}
                   </td>
                   <td className="py-3 px-4 text-white/90">{formatStoreAddress(s) ?? (s.isOnlineStore ? "Loja online" : "-")}</td>
                   <td className="py-3 px-4">

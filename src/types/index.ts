@@ -34,6 +34,8 @@ export type ThriftStore = {
   contents?: any[];
   distanceMeters?: number | null;
   walkTimeMinutes?: number | null;
+  ownerId?: string;
+  ownerName?: string;
 };
 
 export type StoreOwner = {
